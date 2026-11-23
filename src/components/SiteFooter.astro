@@ -1,0 +1,112 @@
+---
+// Site footer: wordmark with contact, delivery and page links.
+import { site } from "../config/site";
+import NavList from "./NavList.astro";
+import Wordmark from "./Wordmark.astro";
+
+const pageLinks = [
+  ...site.navLinks,
+  site.orderLink,
+  { href: "/zasebnost", label: "Zasebnost" },
+];
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="site-footer-columns">
+      <div class="site-footer-farm">
+        <Wordmark size="footer" />
+        <p class="site-footer-contact">
+          {site.address}
+          <br />
+          {site.phone}
+        </p>
+      </div>
+      <div>
+        <h2 class="site-footer-heading">Dostava</h2>
+        <ul class="site-footer-list">
+          <li>Osebno od ponedeljka do srede</li>
+          <li>Plačilo z gotovino ob prevzemu</li>
+        </ul>
+      </div>
+      <nav aria-label="Noga strani">
+        <h2 class="site-footer-heading">Strani</h2>
+        <div class="site-footer-links">
+          <NavList links={pageLinks} layout="column" />
+        </div>
+      </nav>
+    </div>
+    <p class="site-footer-legal">
+      © {year} {site.name}
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: var(--border-width) solid var(--color-line);
+    background-color: var(--color-cream);
+  }
+
+  .site-footer-inner {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-10) var(--content-padding) var(--space-7);
+  }
+
+  .site-footer-columns {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .site-footer-contact {
+    max-width: var(--measure-short);
+    margin-top: var(--space-5);
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  .site-footer-heading {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .site-footer-list {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+    padding: 0;
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+    list-style: none;
+  }
+
+  .site-footer-links {
+    margin-top: var(--space-3);
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .site-footer-legal {
+    margin-top: var(--space-9);
+    padding-top: var(--space-6);
+    border-top: var(--border-width) solid var(--color-line-faint);
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-widest);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  @media (min-width: 64rem) {
+    .site-footer-columns {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,296 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Button from "../../components/Button.astro";
+import Field from "../../components/Field.astro";
+import Notice from "../../components/Notice.astro";
+import OrderProductRow from "../../components/OrderProductRow.astro";
+import OrderSubmitBar from "../../components/OrderSubmitBar.astro";
+import PageBody from "../../components/PageBody.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { messageForActionError } from "../../services/errorService";
+import { splitParagraphs } from "../../services/formatService";
+import {
+  emptyOrderFormValues,
+  loadOrderOffer,
+  orderFormRows,
+  orderFormValuesFromForm,
+  orderInputErrorMessage,
+} from "../../services/orderService";
+
+const result = Astro.getActionResult(actions.submitOrder);
+if (result?.data !== undefined) {
+  return Astro.redirect(`/narocilo/hvala/${result.data.publicCode}`);
+}
+
+let values = emptyOrderFormValues();
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (result?.error !== undefined) {
+  values = orderFormValuesFromForm(await Astro.request.formData());
+  if (isInputError(result.error)) {
+    fieldErrors = result.error.fields;
+    errorMessage = orderInputErrorMessage(fieldErrors);
+  } else {
+    errorMessage = messageForActionError(result.error);
+  }
+}
+
+const offer = await loadOrderOffer();
+const rows = offer === null ? [] : orderFormRows(offer.products, values);
+const canOrder = rows.some((row) => !row.isSoldOut);
+const deliveryParagraphs =
+  offer === null ? [] : splitParagraphs(offer.round.deliveryInfo);
+---
+
+<BaseLayout
+  title="Naročilo"
+  description="Naročite domače mlečne izdelke za ta teden."
+>
+  <PageIntro title="Naročilo">
+    {offer === null ? (
+      <p>
+        Naročila so trenutno zaprta. Ko odpremo nov krog, bo tukaj obrazec za
+        naročilo.
+      </p>
+    ) : (
+      <p>
+        Izberite izdelke in količine ter oddajte naročilo. Naročilo prinesemo
+        osebno od ponedeljka do srede, plačate z gotovino ob prevzemu.
+      </p>
+    )}
+  </PageIntro>
+
+  <PageBody>
+    {offer === null ? (
+      <div class="order-closed">
+        {errorMessage !== null && (
+          <Notice variant="error">{errorMessage}</Notice>
+        )}
+        <Button href="/izdelki" variant="outline">
+          Naši izdelki
+        </Button>
+      </div>
+    ) : !canOrder ? (
+      <div class="order-closed">
+        {errorMessage !== null && (
+          <Notice variant="error">{errorMessage}</Notice>
+        )}
+        <p class="order-closed-text">
+          {rows.length === 0
+            ? "Ta teden ni izdelkov v ponudbi."
+            : "Ta teden je vse razprodano."}
+        </p>
+      </div>
+    ) : (
+      <div class="order-layout">
+        <aside class="order-week" aria-labelledby="week-title">
+          <p class="order-week-label">Ta teden</p>
+          <h2 id="week-title" class="order-week-title">
+            {offer.round.title}
+          </h2>
+          {deliveryParagraphs.map((paragraph) => (
+            <p class="order-week-text">{paragraph}</p>
+          ))}
+        </aside>
+
+        <form
+          class="order-form"
+          method="POST"
+          action={actions.submitOrder}
+          data-order-form
+        >
+          <input type="hidden" name="publicCode" value={values.publicCode} />
+
+          <section class="order-section" aria-labelledby="products-title">
+            <h2 id="products-title" class="order-section-title">
+              Izdelki
+            </h2>
+            {errorMessage !== null && (
+              <Notice variant="error">{errorMessage}</Notice>
+            )}
+            <ul class="order-rows">
+              {rows.map((row) => (
+                <OrderProductRow row={row} />
+              ))}
+            </ul>
+          </section>
+
+          <section class="order-section" aria-labelledby="customer-title">
+            <h2 id="customer-title" class="order-section-title">
+              Vaši podatki
+            </h2>
+            <Field
+              label="Ime in priimek"
+              name="name"
+              value={values.name}
+              errors={fieldErrors.name}
+              autocomplete="name"
+              required
+            />
+            <Field
+              label="Telefon"
+              name="phone"
+              value={values.phone}
+              errors={fieldErrors.phone}
+              hint="Neobvezno. Na to številko vam sporočimo dan dostave."
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+            />
+            {/* Honeypot: people never see it, so it must stay empty. */}
+            <div class="order-honeypot" hidden>
+              <label for="field-website">Pustite prazno</label>
+              <input
+                id="field-website"
+                name="website"
+                type="text"
+                autocomplete="off"
+              />
+            </div>
+          </section>
+
+          <OrderSubmitBar />
+        </form>
+      </div>
+    )}
+  </PageBody>
+</BaseLayout>
+
+<script>
+  // Shows the minus and plus buttons and keeps the total up to date.
+  const priceFormat = new Intl.NumberFormat("sl-SI", {
+    style: "currency",
+    currency: "EUR",
+  });
+
+  function quantityOf(input: HTMLInputElement): number {
+    const value = Number(input.value);
+    return Number.isInteger(value) && value > 0 ? value : 0;
+  }
+
+  function setUpOrderForm(form: HTMLFormElement): void {
+    const inputs =
+      form.querySelectorAll<HTMLInputElement>("[data-price-cents]");
+    const total = form.querySelector<HTMLOutputElement>("[data-order-total]");
+    const totalWrap = form.querySelector<HTMLElement>(
+      "[data-order-total-wrap]",
+    );
+    if (total === null || totalWrap === null) {
+      return;
+    }
+
+    const updateTotal = (): void => {
+      let cents = 0;
+      for (const input of inputs) {
+        cents += quantityOf(input) * Number(input.dataset.priceCents);
+      }
+      total.value = priceFormat.format(cents / 100);
+    };
+
+    for (const button of form.querySelectorAll<HTMLButtonElement>(
+      "[data-step]",
+    )) {
+      const input = document.getElementById(button.dataset.for ?? "");
+      if (!(input instanceof HTMLInputElement)) {
+        continue;
+      }
+      button.hidden = false;
+      button.addEventListener("click", () => {
+        const next = quantityOf(input) + Number(button.dataset.step);
+        input.value = String(Math.min(Number(input.max), Math.max(0, next)));
+        updateTotal();
+      });
+    }
+    for (const input of inputs) {
+      input.addEventListener("input", updateTotal);
+    }
+    totalWrap.hidden = false;
+    updateTotal();
+  }
+
+  const form = document.querySelector<HTMLFormElement>("[data-order-form]");
+  if (form !== null) {
+    setUpOrderForm(form);
+  }
+</script>
+
+<style>
+  .order-closed {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+    max-width: var(--measure);
+  }
+
+  .order-closed-text {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+  }
+
+  .order-layout {
+    display: grid;
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .order-week {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-white);
+  }
+
+  .order-week-label {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .order-week-title {
+    font-size: var(--text-2xl);
+  }
+
+  .order-week-text {
+    color: var(--color-text-strong);
+    line-height: var(--leading-relaxed);
+  }
+
+  .order-form {
+    display: grid;
+    gap: var(--space-8);
+    max-width: var(--measure);
+  }
+
+  .order-section {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .order-section-title {
+    font-size: var(--text-3xl);
+  }
+
+  .order-rows {
+    padding: 0;
+    border-top: var(--border-width) solid var(--color-line);
+    list-style: none;
+  }
+
+  @media (min-width: 64rem) {
+    .order-layout {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+
+    .order-week {
+      grid-column: 2;
+      grid-row: 1;
+      position: sticky;
+      top: var(--space-10);
+    }
+  }
+</style>

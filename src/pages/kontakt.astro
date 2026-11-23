@@ -1,0 +1,115 @@
+---
+import Button from "../components/Button.astro";
+import PageBody from "../components/PageBody.astro";
+import PageIntro from "../components/PageIntro.astro";
+import { site } from "../config/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = true;
+
+const phoneHref = `tel:${site.phone.replaceAll(" ", "")}`;
+---
+
+<BaseLayout title="Kontakt" description="Kontakt in lokacija Kmetije Kremžar.">
+  <PageIntro title="Kontakt">
+    <p>Za vprašanja o izdelkih in naročilih nas pokličite.</p>
+  </PageIntro>
+  <PageBody>
+    <div class="contact">
+      <dl class="contact-details">
+        <div>
+          <dt>Telefon</dt>
+          <dd>
+            <a href={phoneHref}>{site.phone}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Naslov</dt>
+          <dd>{site.address}</dd>
+        </div>
+        <div>
+          <dt>Zemljevid</dt>
+          <dd>
+            <a href={site.mapLink.href}>{site.mapLink.label}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Družbena omrežja</dt>
+          <dd>
+            <ul class="contact-social">
+              {site.socialLinks.map((link) => (
+                <li>
+                  <a href={link.href}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+      <div class="contact-order">
+        <h2>Naročila</h2>
+        <p>
+          Naročila oddajte na spletni strani. Prinesemo jih osebno med
+          ponedeljkom in sredo, plačate z gotovino ob prevzemu.
+        </p>
+        <Button href="/narocilo">Oddaj naročilo</Button>
+      </div>
+    </div>
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .contact {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .contact-details {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .contact-details dt {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .contact-details dd {
+    margin: 0;
+  }
+
+  .contact-details a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+  }
+
+  .contact-social {
+    padding: 0;
+    list-style: none;
+  }
+
+  .contact-order {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-tint);
+  }
+
+  .contact-order h2 {
+    font-size: var(--text-2xl);
+  }
+
+  .contact-order p {
+    margin-block: var(--space-3) var(--space-5);
+  }
+
+  @media (min-width: 48rem) {
+    .contact {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+  }
+</style>

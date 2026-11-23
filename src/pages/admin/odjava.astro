@@ -1,0 +1,10 @@
+---
+// Target of the logout form in the admin header.
+import { actions } from "astro:actions";
+
+const result = Astro.getActionResult(actions.admin.logout);
+if (result !== undefined && result.error === undefined) {
+  return Astro.redirect("/admin/prijava");
+}
+return Astro.redirect("/admin");
+---

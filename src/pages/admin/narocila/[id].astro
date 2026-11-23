@@ -1,0 +1,272 @@
+---
+import { actions, isInputError } from "astro:actions";
+import AdminTable from "../../../components/AdminTable.astro";
+import BackLink from "../../../components/BackLink.astro";
+import Badge from "../../../components/Badge.astro";
+import Button from "../../../components/Button.astro";
+import ConfirmForm from "../../../components/ConfirmForm.astro";
+import Notice from "../../../components/Notice.astro";
+import { OrderStatus } from "../../../consts/statuses";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  findOrderForAdmin,
+  orderStatusLabel,
+} from "../../../services/adminOrderService";
+import { messageForActionError } from "../../../services/errorService";
+import { formatDate, formatPrice } from "../../../services/formatService";
+
+const orderId = Number(Astro.params.id);
+const pagePath = `/admin/narocila/${orderId}`;
+const statusResult = Astro.getActionResult(actions.admin.setOrderStatus);
+const paidResult = Astro.getActionResult(actions.admin.setOrderPaid);
+const itemsResult = Astro.getActionResult(actions.admin.saveOrderItems);
+for (const result of [statusResult, paidResult, itemsResult]) {
+  if (result !== undefined && result.error === undefined) {
+    return Astro.redirect(`${pagePath}?shranjeno`);
+  }
+}
+
+const detail = Number.isInteger(orderId)
+  ? await findOrderForAdmin(orderId)
+  : null;
+if (detail === null) {
+  return new Response(null, { status: 404 });
+}
+const { order, items } = detail;
+
+const actionError =
+  statusResult?.error ?? paidResult?.error ?? itemsResult?.error;
+let errorMessage: string | null = null;
+if (itemsResult?.error !== undefined && isInputError(itemsResult.error)) {
+  errorMessage =
+    itemsResult.error.fields.quantity?.[0] ??
+    messageForActionError(itemsResult.error);
+} else if (actionError !== undefined) {
+  errorMessage = messageForActionError(actionError);
+}
+const isNew = order.status === OrderStatus.new;
+const isDelivered = order.status === OrderStatus.delivered;
+---
+
+<AdminLayout title={order.customerName}>
+  <div class="admin-order">
+    <BackLink href={`/admin/narocila?krog=${order.roundId}`}>
+      Naročila: {order.roundTitle}
+    </BackLink>
+    {Astro.url.searchParams.has("shranjeno") && (
+      <Notice variant="success">Shranjeno.</Notice>
+    )}
+    {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+
+    <dl class="admin-order-facts">
+      <div>
+        <dt>Telefon</dt>
+        <dd>
+          {order.phone === null ? (
+            "ni podan"
+          ) : (
+            <a href={`tel:${order.phone}`}>{order.phone}</a>
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt>Oddano</dt>
+        <dd>{formatDate(order.createdAt)}</dd>
+      </div>
+      <div>
+        <dt>Stanje</dt>
+        <dd>
+          <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
+        </dd>
+      </div>
+      <div>
+        <dt>Plačilo</dt>
+        <dd>{order.isPaid === 1 ? "Plačano" : "Neplačano"}</dd>
+      </div>
+    </dl>
+
+    <section class="admin-order-section" aria-labelledby="items-title">
+      <h2 id="items-title" class="admin-order-heading">
+        Izdelki
+      </h2>
+      <form
+        class="admin-order-items"
+        method="POST"
+        action={actions.admin.saveOrderItems}
+      >
+        <input type="hidden" name="orderId" value={order.id} />
+        <AdminTable>
+          <table>
+            <thead>
+              <tr>
+                <th>Izdelek</th>
+                <th>Količina</th>
+                <th>Skupaj</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr>
+                  <td>
+                    {item.productName}
+                    <span class="admin-order-meta">
+                      {formatPrice(item.unitPriceCents)} / {item.unit}
+                    </span>
+                  </td>
+                  <td>
+                    {isNew ? (
+                      <>
+                        <input type="hidden" name="itemId" value={item.id} />
+                        <input
+                          class="admin-order-quantity"
+                          name="quantity"
+                          value={item.quantity}
+                          inputmode="numeric"
+                          aria-label={`Količina: ${item.productName}`}
+                        />
+                      </>
+                    ) : (
+                      item.quantity
+                    )}
+                  </td>
+                  <td>{formatPrice(item.unitPriceCents * item.quantity)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </AdminTable>
+        <p class="admin-order-total">
+          Skupaj <strong>{formatPrice(order.totalCents)}</strong>
+        </p>
+        {isNew && (
+          <>
+            <p class="admin-order-note">
+              Količina 0 odstrani izdelek. Večja količina se shrani le, če je
+              dovolj zaloge.
+            </p>
+            <Button variant="outline">Shrani količine</Button>
+          </>
+        )}
+      </form>
+    </section>
+
+    <section class="admin-order-section" aria-labelledby="actions-title">
+      <h2 id="actions-title" class="admin-order-heading">
+        Dejanja
+      </h2>
+      <div class="admin-order-actions">
+        {isNew && (
+          <form method="POST" action={actions.admin.setOrderStatus}>
+            <input type="hidden" name="orderId" value={order.id} />
+            <input type="hidden" name="status" value={OrderStatus.delivered} />
+            <Button>Označi kot dostavljeno</Button>
+          </form>
+        )}
+        {isDelivered && (
+          <form method="POST" action={actions.admin.setOrderStatus}>
+            <input type="hidden" name="orderId" value={order.id} />
+            <input type="hidden" name="status" value={OrderStatus.new} />
+            <Button variant="outline">Vrni med nova</Button>
+          </form>
+        )}
+        <form method="POST" action={actions.admin.setOrderPaid}>
+          <input type="hidden" name="orderId" value={order.id} />
+          <input
+            type="hidden"
+            name="isPaid"
+            value={order.isPaid === 1 ? "0" : "1"}
+          />
+          <Button variant="outline">
+            {order.isPaid === 1 ? "Označi kot neplačano" : "Označi kot plačano"}
+          </Button>
+        </form>
+      </div>
+      {isNew && (
+        <ConfirmForm
+          action={actions.admin.setOrderStatus}
+          confirmLabel="Res prekliči. Preklica ni mogoče razveljaviti; zaloga se sprosti."
+          buttonLabel="Prekliči naročilo"
+        >
+          <input type="hidden" name="orderId" value={order.id} />
+          <input type="hidden" name="status" value={OrderStatus.cancelled} />
+        </ConfirmForm>
+      )}
+    </section>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-order {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .admin-order-facts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+
+  .admin-order-facts dt {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .admin-order-facts dd {
+    margin: var(--space-1) 0 0;
+  }
+
+  .admin-order-section,
+  .admin-order-items {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+
+  .admin-order-items :global(.admin-table) {
+    width: 100%;
+  }
+
+  .admin-order-heading {
+    font-size: var(--text-2xl);
+  }
+
+  .admin-order-meta {
+    display: block;
+    color: var(--color-text-soft);
+    font-size: var(--text-xs);
+  }
+
+  .admin-order-quantity {
+    width: var(--input-narrow);
+    min-height: var(--touch-target);
+    padding: var(--space-2);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+  }
+
+  .admin-order-total {
+    font-size: var(--text-lg);
+  }
+
+  .admin-order-note {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .admin-order-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 48rem) {
+    .admin-order-facts {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>

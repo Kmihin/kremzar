@@ -1,0 +1,47 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Button from "../../components/Button.astro";
+import Field from "../../components/Field.astro";
+import Notice from "../../components/Notice.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { messageForActionError } from "../../services/errorService";
+
+const result = Astro.getActionResult(actions.login);
+if (result !== undefined && result.error === undefined) {
+  return Astro.redirect("/admin");
+}
+const fieldErrors = isInputError(result?.error) ? result.error.fields : {};
+const errorMessage =
+  result?.error !== undefined && !isInputError(result.error)
+    ? messageForActionError(result.error)
+    : null;
+---
+
+<AdminLayout title="Prijava" showMenu={false}>
+  <form class="login-form" method="POST" action={actions.login}>
+    {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+    <Field
+      label="Geslo"
+      name="password"
+      value=""
+      type="password"
+      autocomplete="current-password"
+      errors={fieldErrors.password}
+      required
+    />
+    <Button>Prijava</Button>
+  </form>
+</AdminLayout>
+
+<style>
+  .login-form {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+    max-width: var(--measure-short);
+  }
+
+  .login-form :global(.field) {
+    width: 100%;
+  }
+</style>

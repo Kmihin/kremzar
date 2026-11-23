@@ -1,0 +1,329 @@
+---
+import cowPortrait from "../assets/photos/cow-portrait.jpg";
+import heroPasture from "../assets/photos/hero-pasture.jpg";
+import processDairy from "../assets/photos/process-dairy.jpg";
+import productBread from "../assets/photos/product-bread.jpg";
+import AvailabilityStrip from "../components/AvailabilityStrip.astro";
+import Button from "../components/Button.astro";
+import EmptyState from "../components/EmptyState.astro";
+import OrderSteps from "../components/OrderSteps.astro";
+import PageSection from "../components/PageSection.astro";
+import PhotoTile from "../components/PhotoTile.astro";
+import ProductCard from "../components/ProductCard.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  loadOffer,
+  toOfferCards,
+  toStripItems,
+} from "../services/offerService";
+
+const homeCardCount = 3;
+const offer = await loadOffer();
+const offerCards = toOfferCards(offer.products).slice(0, homeCardCount);
+---
+
+<BaseLayout>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 id="hero-title">
+          Domače mleko, jogurt, sir in kruh
+          <span class="hero-title-accent">z naše družinske kmetije.</span>
+        </h1>
+        <p class="hero-lede">
+          Naročite enkrat na teden. Naročilo vam prinesemo osebno od ponedeljka
+          do srede, plačate z gotovino ob prevzemu.
+        </p>
+        <div class="hero-actions">
+          <Button href="/narocilo">Oddaj naročilo</Button>
+          <p class:list={["hero-status", { "is-open": offer.isOpen }]}>
+            <span class="hero-status-dot" aria-hidden="true"></span>
+            {offer.isOpen
+              ? "Naročila za ta teden so odprta"
+              : "Naročila so trenutno zaprta"}
+          </p>
+        </div>
+      </div>
+      <img
+        class="hero-photo"
+        src={heroPasture.src}
+        width={heroPasture.width}
+        height={heroPasture.height}
+        alt="Krave na pašniku"
+        decoding="async"
+      />
+    </div>
+  </section>
+
+  <AvailabilityStrip
+    isOpen={offer.isOpen}
+    items={toStripItems(offer.products)}
+  />
+
+  <PageSection labelledBy="offer-title">
+    <div class="offer-head">
+      <div>
+        <h2 id="offer-title" class="section-title">
+          Ta teden v ponudbi
+        </h2>
+        <p class="section-lede">
+          Količine so omejene. Pri vsakem izdelku piše, koliko ga je še na
+          voljo.
+        </p>
+      </div>
+      <Button href="/izdelki" variant="outline">
+        Vsi izdelki
+      </Button>
+    </div>
+    {offer.isOpen ? (
+      <ul class="card-grid">
+        {offerCards.map((card) => (
+          <li>
+            <ProductCard card={card} headingLevel={3} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <EmptyState>
+        Naročila so trenutno zaprta. Ponudba za naslednji teden bo objavljena
+        tukaj.
+      </EmptyState>
+    )}
+  </PageSection>
+
+  <section class="tiles" aria-label="Več o kmetiji">
+    <PhotoTile href="/izdelki" photo={productBread} title="Izdelki">
+      Sestavine, alergeni in cena za vsak izdelek.
+    </PhotoTile>
+    <PhotoTile href="/novice" photo={processDairy} title="Novice">
+      Kaj je novega na kmetiji.
+    </PhotoTile>
+    <PhotoTile href="/galerija" photo={cowPortrait} title="Galerija">
+      Utrinki s kmetije.
+    </PhotoTile>
+  </section>
+
+  <PageSection labelledBy="farm-title" tone="green">
+    <div class="farm">
+      <h2 id="farm-title" class="section-title">
+        Naša kmetija
+      </h2>
+      <div class="farm-text">
+        <p>
+          Smo majhna družinska kmetija z nekaj kravami. Iz njihovega mleka doma
+          pripravimo jogurt in sir, pečemo pa tudi kruh.
+        </p>
+        <p>[TODO Kristjan: dva ali trije stavki o zgodbi kmetije]</p>
+        <a class="farm-link" href="/o-kmetiji">
+          Več o kmetiji
+        </a>
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection labelledBy="steps-title" tone="tint">
+    <div class="steps">
+      <h2 id="steps-title" class="steps-title">
+        Kako naročiti
+      </h2>
+      <OrderSteps />
+      <Button href="/narocilo" variant="outline">
+        Oddaj naročilo
+      </Button>
+    </div>
+  </PageSection>
+</BaseLayout>
+
+<style>
+  .hero-inner {
+    display: grid;
+    gap: var(--space-8);
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-9) var(--content-padding) var(--space-10);
+  }
+
+  .hero-text {
+    animation: hero-reveal var(--duration-reveal) var(--easing-reveal) both;
+  }
+
+  .hero h1 {
+    font-size: var(--text-hero);
+  }
+
+  .hero-title-accent {
+    display: block;
+    color: var(--color-gold-ink);
+    font-style: italic;
+  }
+
+  .hero-lede {
+    max-width: var(--measure);
+    margin-top: var(--space-5);
+    color: var(--color-text-soft);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-5);
+    margin-top: var(--space-7);
+  }
+
+  .hero-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .hero-status-dot {
+    width: var(--status-dot);
+    height: var(--status-dot);
+    border-radius: var(--radius-full);
+    background-color: var(--color-control-border);
+  }
+
+  .hero-status.is-open .hero-status-dot {
+    background-color: var(--color-success);
+    animation: status-pulse var(--duration-pulse) ease-in-out infinite;
+  }
+
+  .hero-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-2xl);
+    object-fit: cover;
+  }
+
+  @keyframes hero-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-3));
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes status-pulse {
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  .offer-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin-bottom: var(--space-9);
+  }
+
+  .section-title {
+    font-size: var(--text-4xl);
+  }
+
+  .section-lede {
+    margin-top: var(--space-2);
+    color: var(--color-text-soft);
+  }
+
+  .card-grid {
+    display: grid;
+    gap: var(--space-6);
+    padding: 0;
+    list-style: none;
+  }
+
+  .tiles {
+    display: grid;
+    gap: var(--space-6);
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: 0 var(--content-padding) var(--space-section);
+  }
+
+  .farm {
+    display: grid;
+    gap: var(--space-6);
+    max-width: var(--content-width-narrow);
+    margin-inline: auto;
+  }
+
+  .farm-text {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    color: var(--color-on-green-soft);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  .farm-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    color: var(--color-gold);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .farm-link:hover {
+    text-decoration: underline;
+  }
+
+  .steps {
+    display: grid;
+    gap: var(--space-8);
+    justify-items: center;
+    max-width: var(--content-width-narrow);
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .steps-title {
+    font-size: var(--text-3xl);
+  }
+
+  @media (min-width: 40rem) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .farm {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hero-inner {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding-block: var(--space-10);
+    }
+
+    .card-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

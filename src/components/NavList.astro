@@ -1,0 +1,56 @@
+---
+// List of navigation links; the current page is marked with aria-current.
+import type { NavLink } from "../models/NavLink";
+
+interface Props {
+  links: NavLink[];
+  layout: "row" | "column";
+}
+
+const { links, layout } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<ul class:list={["nav-list", `nav-list-${layout}`]}>
+  {links.map((link) => (
+    <li>
+      <a
+        class="nav-list-link"
+        href={link.href}
+        aria-current={currentPath.startsWith(link.href) ? "page" : undefined}
+      >
+        {link.label}
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .nav-list {
+    display: flex;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-list-row {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-6);
+  }
+
+  .nav-list-column {
+    flex-direction: column;
+  }
+
+  .nav-list-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--easing-standard);
+  }
+
+  .nav-list-link:hover,
+  .nav-list-link[aria-current="page"] {
+    color: var(--color-gold-ink);
+  }
+</style>

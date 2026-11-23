@@ -1,0 +1,30 @@
+---
+// Link back to a list page, shown above a detail page.
+interface Props {
+  href: string;
+}
+
+const { href } = Astro.props;
+---
+
+<a class="back-link" href={href}>
+  <slot />
+</a>
+
+<style>
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .back-link:hover {
+    color: var(--color-gold-ink);
+  }
+</style>

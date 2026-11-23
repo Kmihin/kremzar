@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kmetija-kremzar",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-11-15",
+  "compatibility_flags": ["nodejs_compat"],
+  // Set with `npx wrangler secret put NAME`; locally in .dev.vars.
+  "secrets": {
+    "required": ["ADMIN_PASSWORD"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kremzar",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+    },
+  ],
+}

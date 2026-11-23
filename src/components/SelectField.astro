@@ -1,0 +1,47 @@
+---
+// Labelled select field.
+import type { SelectOption } from "../models/SelectOption";
+
+interface Props {
+  label: string;
+  name: string;
+  value: string;
+  options: SelectOption[];
+}
+
+const { label, name, value, options } = Astro.props;
+const selectId = `field-${name}`;
+---
+
+<div class="select-field">
+  <label class="select-field-label" for={selectId}>
+    {label}
+  </label>
+  <select class="select-field-control" id={selectId} name={name}>
+    {options.map((option) => (
+      <option value={option.value} selected={option.value === value}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+</div>
+
+<style>
+  .select-field {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .select-field-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .select-field-control {
+    min-height: var(--touch-target);
+    padding: var(--space-2) var(--space-3);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+  }
+</style>

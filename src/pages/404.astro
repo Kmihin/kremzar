@@ -1,0 +1,30 @@
+---
+import Button from "../components/Button.astro";
+import PageBody from "../components/PageBody.astro";
+import PageIntro from "../components/PageIntro.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = true;
+---
+
+<BaseLayout title="Strani ni mogoče najti">
+  <PageIntro title="Te strani ni">
+    <p>Stran, ki jo iščete, ne obstaja ali je bila premaknjena.</p>
+  </PageIntro>
+  <PageBody>
+    <div class="not-found-actions">
+      <Button href="/">Na prvo stran</Button>
+      <Button href="/izdelki" variant="outline">
+        Izdelki
+      </Button>
+    </div>
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .not-found-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>

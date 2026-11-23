@@ -1,0 +1,36 @@
+---
+import { actions, isInputError } from "astro:actions";
+import ProductForm from "../../../components/ProductForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  emptyProductFormValues,
+  productFormValuesFromForm,
+} from "../../../services/adminProductService";
+import { messageForActionError } from "../../../services/errorService";
+
+const result = Astro.getActionResult(actions.admin.createProduct);
+if (result !== undefined && result.error === undefined) {
+  return Astro.redirect("/admin/izdelki?shranjeno");
+}
+
+let values = emptyProductFormValues();
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (result?.error !== undefined) {
+  values = productFormValuesFromForm(await Astro.request.formData());
+  if (isInputError(result.error)) {
+    fieldErrors = result.error.fields;
+  } else {
+    errorMessage = messageForActionError(result.error);
+  }
+}
+---
+
+<AdminLayout title="Nov izdelek">
+  <ProductForm
+    action={actions.admin.createProduct}
+    values={values}
+    fieldErrors={fieldErrors}
+    errorMessage={errorMessage}
+  />
+</AdminLayout>

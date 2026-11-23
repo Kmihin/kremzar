@@ -1,0 +1,37 @@
+---
+// Wrapper for admin tables: scrolls sideways on narrow screens.
+---
+
+<div class="admin-table">
+  <slot />
+</div>
+
+<style>
+  .admin-table {
+    overflow-x: auto;
+  }
+
+  .admin-table :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .admin-table :global(th) {
+    padding: var(--space-2);
+    border-bottom: var(--border-width) solid var(--color-control-border);
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-wider);
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .admin-table :global(td) {
+    padding: var(--space-3) var(--space-2);
+    border-bottom: var(--border-width) solid var(--color-line);
+    vertical-align: middle;
+  }
+</style>

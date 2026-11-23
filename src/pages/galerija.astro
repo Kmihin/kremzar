@@ -1,0 +1,63 @@
+---
+import EmptyState from "../components/EmptyState.astro";
+import PageBody from "../components/PageBody.astro";
+import PageIntro from "../components/PageIntro.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { listGallery } from "../services/galleryService";
+
+const items = await listGallery();
+---
+
+<BaseLayout title="Galerija" description="Fotografije s Kmetije Kremžar.">
+  <PageIntro title="Galerija">
+    <p>Utrinki s kmetije.</p>
+  </PageIntro>
+  <PageBody>
+    {items.length === 0 ? (
+      <EmptyState>Fotografije bodo dodane kmalu.</EmptyState>
+    ) : (
+      <ul class="gallery">
+        {items.map((item) => (
+          <li>
+            <figure class="gallery-item">
+              <img
+                src={`/media/${item.imageId}`}
+                width={item.width}
+                height={item.height}
+                alt={item.caption}
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption>{item.caption}</figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    )}
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(100%, var(--gallery-column-min)), 1fr)
+    );
+    gap: var(--space-5);
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+  }
+
+  .gallery-item figcaption {
+    margin-top: var(--space-2);
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+</style>

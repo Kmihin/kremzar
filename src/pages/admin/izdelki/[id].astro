@@ -1,0 +1,47 @@
+---
+import { actions, isInputError } from "astro:actions";
+import ProductForm from "../../../components/ProductForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  findProductForAdmin,
+  productFormValuesFromForm,
+  productFormValuesFromProduct,
+} from "../../../services/adminProductService";
+import { messageForActionError } from "../../../services/errorService";
+
+const result = Astro.getActionResult(actions.admin.saveProduct);
+if (result !== undefined && result.error === undefined) {
+  return Astro.redirect("/admin/izdelki?shranjeno");
+}
+
+const productId = Number(Astro.params.id);
+const product = Number.isInteger(productId)
+  ? await findProductForAdmin(productId)
+  : null;
+if (product === null) {
+  return new Response(null, { status: 404 });
+}
+
+let values = productFormValuesFromProduct(product);
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (result?.error !== undefined) {
+  values = productFormValuesFromForm(await Astro.request.formData());
+  if (isInputError(result.error)) {
+    fieldErrors = result.error.fields;
+  } else {
+    errorMessage = messageForActionError(result.error);
+  }
+}
+---
+
+<AdminLayout title={product.name}>
+  <ProductForm
+    action={actions.admin.saveProduct}
+    values={values}
+    fieldErrors={fieldErrors}
+    errorMessage={errorMessage}
+    productId={product.id}
+    imageId={product.imageId}
+  />
+</AdminLayout>

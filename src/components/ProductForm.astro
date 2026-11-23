@@ -1,0 +1,152 @@
+---
+// Product form for creating and editing. Shows the values as typed and the
+// error messages next to the fields.
+import type { ProductFormValues } from "../models/ProductFormValues";
+import Button from "./Button.astro";
+import CheckboxField from "./CheckboxField.astro";
+import Field from "./Field.astro";
+import ImageField from "./ImageField.astro";
+import Notice from "./Notice.astro";
+
+interface Props {
+  action: string;
+  values: ProductFormValues;
+  fieldErrors: Record<string, string[] | undefined>;
+  errorMessage: string | null;
+  productId?: number;
+  imageId?: number | null;
+}
+
+const {
+  action,
+  values,
+  fieldErrors,
+  errorMessage,
+  productId,
+  imageId = null,
+} = Astro.props;
+---
+
+<form
+  class="product-form"
+  method="POST"
+  action={action}
+  enctype="multipart/form-data"
+>
+  {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+  {productId !== undefined && (
+    <input type="hidden" name="productId" value={productId} />
+  )}
+  <Field
+    label="Ime"
+    name="name"
+    value={values.name}
+    errors={fieldErrors.name}
+    required
+  />
+  <Field
+    label="Naslov v povezavi"
+    name="slug"
+    value={values.slug}
+    errors={fieldErrors.slug}
+    hint="Na primer domaci-jogurt. Prazno: nastane iz imena."
+  />
+  <div class="product-form-row">
+    <Field
+      label="Enota"
+      name="unit"
+      value={values.unit}
+      errors={fieldErrors.unit}
+      hint="Na primer 1 l, 500 g ali kos."
+      required
+    />
+    <Field
+      label="Redna cena (€)"
+      name="price"
+      value={values.price}
+      errors={fieldErrors.price}
+      inputmode="decimal"
+      hint="Na primer 2,50."
+      required
+    />
+    <Field
+      label="Vrstni red"
+      name="sortOrder"
+      value={values.sortOrder}
+      errors={fieldErrors.sortOrder}
+      inputmode="numeric"
+      hint="Manjše število je prej."
+      required
+    />
+  </div>
+  <Field
+    label="Opis"
+    name="description"
+    value={values.description}
+    errors={fieldErrors.description}
+    hint="Prazna vrstica začne nov odstavek."
+    multiline
+  />
+  <Field
+    label="Sestavine"
+    name="ingredients"
+    value={values.ingredients}
+    errors={fieldErrors.ingredients}
+    multiline
+  />
+  <Field
+    label="Alergeni"
+    name="allergens"
+    value={values.allergens}
+    errors={fieldErrors.allergens}
+  />
+  <ImageField
+    label="Fotografija"
+    currentImageId={imageId}
+    errors={fieldErrors.image}
+  />
+  {imageId !== null && (
+    <CheckboxField
+      label="Odstrani fotografijo (pokaže se nadomestna)"
+      name="removeImage"
+      checked={false}
+    />
+  )}
+  <CheckboxField
+    label="Aktiven (viden na strani)"
+    name="isActive"
+    checked={values.isActive}
+  />
+  <div class="product-form-actions">
+    <Button>Shrani</Button>
+    <Button href="/admin/izdelki" variant="outline">
+      Prekliči
+    </Button>
+  </div>
+</form>
+
+<style>
+  .product-form {
+    display: grid;
+    gap: var(--space-5);
+    max-width: var(--measure);
+  }
+
+  .product-form-row {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .product-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 40rem) {
+    .product-form-row {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
+  }
+</style>

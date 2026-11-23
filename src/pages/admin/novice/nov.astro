@@ -1,0 +1,36 @@
+---
+import { actions, isInputError } from "astro:actions";
+import NewsForm from "../../../components/NewsForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  emptyNewsFormValues,
+  newsFormValuesFromForm,
+} from "../../../services/adminNewsService";
+import { messageForActionError } from "../../../services/errorService";
+
+const result = Astro.getActionResult(actions.admin.createNews);
+if (result !== undefined && result.error === undefined) {
+  return Astro.redirect("/admin/novice?shranjeno");
+}
+
+let values = emptyNewsFormValues();
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (result?.error !== undefined) {
+  values = newsFormValuesFromForm(await Astro.request.formData());
+  if (isInputError(result.error)) {
+    fieldErrors = result.error.fields;
+  } else {
+    errorMessage = messageForActionError(result.error);
+  }
+}
+---
+
+<AdminLayout title="Nova novica">
+  <NewsForm
+    action={actions.admin.createNews}
+    values={values}
+    fieldErrors={fieldErrors}
+    errorMessage={errorMessage}
+  />
+</AdminLayout>

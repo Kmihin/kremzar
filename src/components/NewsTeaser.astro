@@ -1,0 +1,52 @@
+---
+// Date, title and first paragraph of a news post, linking to the full post.
+import type { NewsPostView } from "../models/NewsPostView";
+
+interface Props {
+  post: NewsPostView;
+  headingLevel: 2 | 3;
+}
+
+const { post, headingLevel } = Astro.props;
+const Heading = headingLevel === 2 ? "h2" : "h3";
+---
+
+<article class="news-teaser">
+  <time datetime={post.publishedAt}>{post.dateLabel}</time>
+  <Heading class="news-teaser-title">
+    <a href={`/novice/${post.slug}`}>{post.title}</a>
+  </Heading>
+  <p>{post.paragraphs[0]}</p>
+</article>
+
+<style>
+  .news-teaser {
+    max-width: var(--measure);
+  }
+
+  .news-teaser time {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .news-teaser-title {
+    margin-block: var(--space-2) var(--space-3);
+    font-size: var(--text-2xl);
+  }
+
+  .news-teaser-title a {
+    text-decoration: none;
+  }
+
+  .news-teaser-title a:hover {
+    color: var(--color-gold-ink);
+  }
+
+  .news-teaser p {
+    color: var(--color-text-soft);
+    line-height: var(--leading-relaxed);
+  }
+</style>

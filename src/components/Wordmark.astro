@@ -1,0 +1,37 @@
+---
+// Text logo: "KMETIJA" in green and "KREMŽAR" in italic gold.
+import { site } from "../config/site";
+
+interface Props {
+  size: "header" | "footer";
+}
+
+const { size } = Astro.props;
+---
+
+<span class:list={["wordmark", `wordmark-${size}`]}>
+  {site.wordmarkLead} <span class="wordmark-accent">{site.wordmarkAccent}</span>
+</span>
+
+<style>
+  .wordmark {
+    color: var(--color-green);
+    font-family: var(--font-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tight);
+    white-space: nowrap;
+  }
+
+  .wordmark-header {
+    font-size: var(--text-xl);
+  }
+
+  .wordmark-footer {
+    font-size: var(--text-2xl);
+  }
+
+  .wordmark-accent {
+    color: var(--color-gold);
+    font-style: italic;
+  }
+</style>

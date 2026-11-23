@@ -1,0 +1,41 @@
+---
+import Button from "../../../components/Button.astro";
+import OrderConfirmationDetails from "../../../components/OrderConfirmationDetails.astro";
+import PageBody from "../../../components/PageBody.astro";
+import PageIntro from "../../../components/PageIntro.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { findOrderConfirmation } from "../../../services/orderService";
+
+const confirmation = await findOrderConfirmation(Astro.params.publicCode ?? "");
+// An unknown code keeps the 404 status but explains itself: a customer who
+// lands here right after submitting must know the order was not saved.
+if (confirmation === null) {
+  Astro.response.status = 404;
+}
+---
+
+{confirmation === null ? (
+  <BaseLayout title="Naročila ni" noindex>
+    <PageIntro title="Naročila ni">
+      <p>
+        Naročila s to povezavo ne najdemo. Če ste ga pravkar oddali, se ni
+        shranilo. Oddajte ga, prosimo, znova.
+      </p>
+    </PageIntro>
+    <PageBody>
+      <Button href="/narocilo">Nazaj na naročilo</Button>
+    </PageBody>
+  </BaseLayout>
+) : (
+  <BaseLayout title="Hvala za naročilo" noindex>
+    <PageIntro title="Hvala za naročilo">
+      <p>
+        Naročilo smo prejeli. Prinesemo ga osebno od ponedeljka do srede,
+        plačate z gotovino ob prevzemu.
+      </p>
+    </PageIntro>
+    <PageBody>
+      <OrderConfirmationDetails confirmation={confirmation} />
+    </PageBody>
+  </BaseLayout>
+)}

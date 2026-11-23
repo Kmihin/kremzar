@@ -1,0 +1,139 @@
+---
+import AdminTable from "../../components/AdminTable.astro";
+import Button from "../../components/Button.astro";
+import EmptyState from "../../components/EmptyState.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { loadDashboard } from "../../services/adminRoundService";
+import { formatPrice } from "../../services/formatService";
+
+const dashboard = await loadDashboard();
+---
+
+<AdminLayout title="Pregled">
+  {dashboard === null ? (
+    <div class="dashboard-empty">
+      <EmptyState>Ni odprtega kroga. Naročila so zaprta.</EmptyState>
+      <Button href="/admin/krogi" variant="outline">
+        Krogi
+      </Button>
+    </div>
+  ) : (
+    <div class="dashboard">
+      <p class="dashboard-round">
+        Odprt krog:{" "}
+        <a href={`/admin/krogi/${dashboard.round.id}`}>
+          {dashboard.round.title}
+        </a>
+      </p>
+      <Button
+        href={`/admin/narocila?krog=${dashboard.round.id}`}
+        variant="outline"
+      >
+        Naročila
+      </Button>
+      <dl class="dashboard-totals">
+        <div>
+          <dt>Naročila</dt>
+          <dd>{dashboard.totals.orderCount}</dd>
+        </div>
+        <div>
+          <dt>Promet</dt>
+          <dd>{formatPrice(dashboard.totals.revenueCents)}</dd>
+        </div>
+        <div>
+          <dt>Plačano</dt>
+          <dd>{formatPrice(dashboard.totals.paidCents)}</dd>
+        </div>
+        <div>
+          <dt>Neplačano</dt>
+          <dd>
+            {formatPrice(
+              dashboard.totals.revenueCents - dashboard.totals.paidCents,
+            )}
+          </dd>
+        </div>
+      </dl>
+      <h2 class="dashboard-heading">Za pripravo</h2>
+      <AdminTable>
+        <table>
+          <thead>
+            <tr>
+              <th>Izdelek</th>
+              <th>Naročeno</th>
+              <th>Omejitev</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dashboard.lines.map((line) => (
+              <tr>
+                <td>
+                  {line.productName} ({line.unit})
+                </td>
+                <td>{line.orderedQuantity}</td>
+                <td>{line.stockLimit ?? "brez"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </AdminTable>
+    </div>
+  )}
+</AdminLayout>
+
+<style>
+  .dashboard-empty,
+  .dashboard {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .dashboard {
+    justify-items: stretch;
+  }
+
+  .dashboard > :global(.button) {
+    justify-self: start;
+  }
+
+  .dashboard-round {
+    font-size: var(--text-lg);
+  }
+
+  .dashboard-totals {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .dashboard-totals div {
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-white);
+  }
+
+  .dashboard-totals dt {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .dashboard-totals dd {
+    margin: var(--space-1) 0 0;
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+  }
+
+  .dashboard-heading {
+    font-size: var(--text-2xl);
+  }
+
+  @media (min-width: 48rem) {
+    .dashboard-totals {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,155 @@
+---
+import cowPortrait from "../assets/photos/cow-portrait.jpg";
+import heroPasture from "../assets/photos/hero-pasture.jpg";
+import processDairy from "../assets/photos/process-dairy.jpg";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = true;
+---
+
+<BaseLayout
+  title="O kmetiji"
+  description="Kmetija Kremžar je majhna družinska kmetija z nekaj kravami."
+>
+  <article class="about">
+    <h1>O kmetiji</h1>
+    <p class="about-lede">
+      Smo majhna družinska kmetija z nekaj kravami. Iz njihovega mleka doma
+      pripravimo jogurt in sir, pečemo pa tudi kruh.
+    </p>
+
+    <img
+      class="about-photo"
+      src={heroPasture.src}
+      width={heroPasture.width}
+      height={heroPasture.height}
+      alt="Pašnik ob kmetiji"
+      decoding="async"
+    />
+    <section class="about-section" aria-labelledby="story-title">
+      <h2 id="story-title">Naša zgodba</h2>
+      <p>[TODO Kristjan: kdo smo, od kdaj kmetujemo, kje je kmetija]</p>
+    </section>
+
+    <img
+      class="about-photo"
+      src={cowPortrait.src}
+      width={cowPortrait.width}
+      height={cowPortrait.height}
+      alt="Ena od naših krav"
+      loading="lazy"
+      decoding="async"
+    />
+    <section class="about-section" aria-labelledby="cows-title">
+      <h2 id="cows-title">Naše krave</h2>
+      <p>
+        [TODO Kristjan: koliko krav imamo, katere pasme so, kako živijo (paša,
+        hlev)]
+      </p>
+    </section>
+
+    <img
+      class="about-photo"
+      src={processDairy.src}
+      width={processDairy.width}
+      height={processDairy.height}
+      alt="Priprava mlečnih izdelkov"
+      loading="lazy"
+      decoding="async"
+    />
+    <section class="about-section" aria-labelledby="making-title">
+      <h2 id="making-title">Kako nastanejo izdelki</h2>
+      <dl class="about-making">
+        <div class="about-making-item">
+          <dt>Mleko</dt>
+          <dd>[TODO Kristjan: od molže do prodaje]</dd>
+        </div>
+        <div class="about-making-item">
+          <dt>Jogurt</dt>
+          <dd>[TODO Kristjan: kako pripravimo jogurt]</dd>
+        </div>
+        <div class="about-making-item">
+          <dt>Sir</dt>
+          <dd>[TODO Kristjan: kako pripravimo sir in kako dolgo zori]</dd>
+        </div>
+        <div class="about-making-item">
+          <dt>Kruh</dt>
+          <dd>[TODO Kristjan: kako pečemo kruh]</dd>
+        </div>
+      </dl>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .about {
+    max-width: var(--content-width-narrow);
+    margin-inline: auto;
+    padding: var(--space-10) var(--content-padding) var(--space-section);
+  }
+
+  .about h1 {
+    font-size: var(--text-page-title);
+  }
+
+  .about-lede {
+    margin-top: var(--space-5);
+    color: var(--color-text-soft);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+  }
+
+  .about-photo {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    margin-top: var(--space-8);
+    border-radius: var(--radius-2xl);
+    object-fit: cover;
+  }
+
+  .about-section {
+    margin-top: var(--space-8);
+  }
+
+  .about-section h2 {
+    font-size: var(--text-3xl);
+  }
+
+  .about-section > p {
+    margin-top: var(--space-4);
+    color: var(--color-text-strong);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+  }
+
+  .about-making {
+    margin-top: var(--space-5);
+    border-top: var(--border-width) solid var(--color-line);
+  }
+
+  .about-making-item {
+    display: grid;
+    gap: var(--space-1);
+    padding-block: var(--space-4);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  .about-making-item dt {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .about-making-item dd {
+    margin: 0;
+    color: var(--color-text-strong);
+  }
+
+  @media (min-width: 40rem) {
+    .about-making-item {
+      grid-template-columns: var(--fact-label-width) 1fr;
+    }
+  }
+</style>

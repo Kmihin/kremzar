@@ -1,0 +1,42 @@
+---
+// Product photo: the uploaded one, or the placeholder for the product's slug.
+// The frame is 4:5 and crops the photo, so an uploaded photo gets 4:5 size
+// attributes, which only reserve that shape while it loads.
+import { productPhotoFor } from "../config/productPhotos";
+
+interface Props {
+  slug: string;
+  name: string;
+  imageId: number | null;
+  isSoldOut: boolean;
+  loading: "lazy" | "eager";
+}
+
+const { slug, name, imageId, isSoldOut, loading } = Astro.props;
+const placeholder = productPhotoFor(slug);
+const src = imageId === null ? placeholder.src : `/media/${imageId}`;
+const width = imageId === null ? placeholder.width : 800;
+const height = imageId === null ? placeholder.height : 1000;
+---
+
+<img
+  class:list={["product-photo", { "is-sold-out": isSoldOut }]}
+  src={src}
+  width={width}
+  height={height}
+  alt={name}
+  loading={loading}
+  decoding="async"
+/>
+
+<style>
+  .product-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+
+  .product-photo.is-sold-out {
+    filter: grayscale(1);
+  }
+</style>

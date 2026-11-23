@@ -1,0 +1,15 @@
+---
+// Content area of an inner page, below the page intro.
+---
+
+<div class="page-body">
+  <slot />
+</div>
+
+<style>
+  .page-body {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-6) var(--content-padding) var(--space-section);
+  }
+</style>

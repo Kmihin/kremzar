@@ -1,0 +1,73 @@
+---
+import BackLink from "../../components/BackLink.astro";
+import PageBody from "../../components/PageBody.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { findNewsPost } from "../../services/newsService";
+
+const post = await findNewsPost(Astro.params.slug ?? "");
+if (post === null) {
+  return new Response(null, { status: 404 });
+}
+// The photo frame is 3:2 and crops the photo; its size attributes only
+// reserve that shape while it loads.
+---
+
+<BaseLayout title={post.title} description={post.paragraphs[0]}>
+  <PageBody>
+    <BackLink href="/novice">Vse novice</BackLink>
+    <article class="news-post">
+      <time datetime={post.publishedAt}>{post.dateLabel}</time>
+      <h1>{post.title}</h1>
+      {post.imageId !== null && (
+        <img
+          class="news-post-photo"
+          src={`/media/${post.imageId}`}
+          width="1200"
+          height="800"
+          alt=""
+        />
+      )}
+      {post.paragraphs.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+    </article>
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .news-post-photo {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    margin-bottom: var(--space-6);
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+  }
+
+  .news-post {
+    max-width: var(--measure);
+    margin-top: var(--space-4);
+  }
+
+  .news-post time {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .news-post h1 {
+    margin-block: var(--space-3) var(--space-6);
+    font-size: var(--text-page-title);
+  }
+
+  .news-post p {
+    color: var(--color-text-strong);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+  }
+
+  .news-post p + p {
+    margin-top: var(--space-4);
+  }
+</style>

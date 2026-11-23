@@ -1,0 +1,66 @@
+---
+import AdminTable from "../../../components/AdminTable.astro";
+import Badge from "../../../components/Badge.astro";
+import Button from "../../../components/Button.astro";
+import Notice from "../../../components/Notice.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { listProductsForAdmin } from "../../../services/adminProductService";
+import { formatPrice } from "../../../services/formatService";
+
+const products = await listProductsForAdmin();
+const isSaved = Astro.url.searchParams.has("shranjeno");
+---
+
+<AdminLayout title="Izdelki">
+  <div class="admin-products">
+    {isSaved && <Notice variant="success">Izdelek je shranjen.</Notice>}
+    <Button href="/admin/izdelki/nov" variant="outline">
+      Nov izdelek
+    </Button>
+    <AdminTable>
+      <table>
+        <thead>
+          <tr>
+            <th>Izdelek</th>
+            <th>Redna cena</th>
+            <th>Stanje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((product) => (
+            <tr>
+              <td>
+                <a href={`/admin/izdelki/${product.id}`}>{product.name}</a>
+                <span class="admin-products-unit">{product.unit}</span>
+              </td>
+              <td>{formatPrice(product.priceCents)}</td>
+              <td>
+                <Badge variant="outline">
+                  {product.isActive === 1 ? "Aktiven" : "Skrit"}
+                </Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </AdminTable>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-products {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .admin-products :global(.admin-table) {
+    width: 100%;
+  }
+
+  .admin-products-unit {
+    display: block;
+    color: var(--color-text-soft);
+    font-size: var(--text-xs);
+  }
+</style>

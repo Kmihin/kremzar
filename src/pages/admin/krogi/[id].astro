@@ -1,0 +1,277 @@
+---
+import { actions, isInputError } from "astro:actions";
+import AdminTable from "../../../components/AdminTable.astro";
+import Badge from "../../../components/Badge.astro";
+import Button from "../../../components/Button.astro";
+import Field from "../../../components/Field.astro";
+import Notice from "../../../components/Notice.astro";
+import { RoundStatus } from "../../../consts/statuses";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  findRoundForAdmin,
+  listRoundLinesForAdmin,
+  roundLineFormValues,
+  roundLineFormValuesFromForm,
+  roundStatusLabel,
+} from "../../../services/adminRoundService";
+import { messageForActionError } from "../../../services/errorService";
+
+const roundId = Number(Astro.params.id);
+const pagePath = `/admin/krogi/${roundId}`;
+
+const saveResult = Astro.getActionResult(actions.admin.saveRound);
+if (saveResult !== undefined && saveResult.error === undefined) {
+  return Astro.redirect(`${pagePath}?shranjeno`);
+}
+const openResult = Astro.getActionResult(actions.admin.openRound);
+if (openResult !== undefined && openResult.error === undefined) {
+  return Astro.redirect(`${pagePath}?odprt`);
+}
+const closeResult = Astro.getActionResult(actions.admin.closeRound);
+if (closeResult !== undefined && closeResult.error === undefined) {
+  return Astro.redirect(`${pagePath}?zaprt`);
+}
+
+const round = Number.isInteger(roundId)
+  ? await findRoundForAdmin(roundId)
+  : null;
+if (round === null) {
+  return new Response(null, { status: 404 });
+}
+const lines = await listRoundLinesForAdmin(round.id);
+
+let title = round.title;
+let deliveryInfo = round.deliveryInfo;
+let rows = roundLineFormValues(lines);
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (saveResult?.error !== undefined) {
+  const formData = await Astro.request.formData();
+  title = String(formData.get("title") ?? "");
+  deliveryInfo = String(formData.get("deliveryInfo") ?? "");
+  rows = roundLineFormValuesFromForm(lines, formData);
+  if (isInputError(saveResult.error)) {
+    fieldErrors = saveResult.error.fields;
+  } else {
+    errorMessage = messageForActionError(saveResult.error);
+  }
+}
+const tableErrors = [
+  ...(fieldErrors.price ?? []),
+  ...(fieldErrors.stockLimit ?? []),
+];
+const statusError = openResult?.error ?? closeResult?.error;
+const statusErrorMessage =
+  statusError !== undefined ? messageForActionError(statusError) : null;
+const isOpen = round.status === RoundStatus.open;
+const notice = Astro.url.searchParams.has("shranjeno")
+  ? "Krog je shranjen."
+  : Astro.url.searchParams.has("odprt")
+    ? "Krog je odprt. Naročila so možna."
+    : Astro.url.searchParams.has("zaprt")
+      ? "Krog je zaprt. Novih naročil ni mogoče oddati."
+      : null;
+---
+
+<AdminLayout title={round.title}>
+  <div class="round-page">
+    {notice !== null && <Notice variant="success">{notice}</Notice>}
+
+    <section class="round-status" aria-labelledby="status-title">
+      <h2 id="status-title" class="round-heading">
+        Stanje
+      </h2>
+      {statusErrorMessage !== null && (
+        <Notice variant="error">{statusErrorMessage}</Notice>
+      )}
+      <Badge variant="outline">{roundStatusLabel(round.status)}</Badge>
+      {isOpen ? (
+        <form method="POST" action={actions.admin.closeRound}>
+          <input type="hidden" name="roundId" value={round.id} />
+          <Button variant="outline">Zapri krog</Button>
+        </form>
+      ) : (
+        <form method="POST" action={actions.admin.openRound}>
+          <input type="hidden" name="roundId" value={round.id} />
+          <Button variant="outline">Odpri krog</Button>
+        </form>
+      )}
+      {!isOpen && (
+        <p class="round-note">Odpiranje zapre krog, ki je trenutno odprt.</p>
+      )}
+    </section>
+
+    <form class="round-form" method="POST" action={actions.admin.saveRound}>
+      <input type="hidden" name="roundId" value={round.id} />
+      {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+      <Field
+        label="Naslov"
+        name="title"
+        value={title}
+        errors={fieldErrors.title}
+        required
+      />
+      <Field
+        label="Podatki o dostavi"
+        name="deliveryInfo"
+        value={deliveryInfo}
+        errors={fieldErrors.deliveryInfo}
+        hint="Prikazano na strani Naročilo."
+        multiline
+      />
+
+      <h2 class="round-heading">Izdelki v ponudbi</h2>
+      <p class="round-note">
+        Obkljukajte izdelke v ponudbi. Cena v evrih, na primer 2,50. Prazna
+        omejitev pomeni brez omejitve. Izdelka z naročili ni mogoče odstraniti
+        iz kroga.
+      </p>
+      {tableErrors.length > 0 && (
+        <Notice variant="error">{tableErrors.join(" ")}</Notice>
+      )}
+      <AdminTable>
+        <table>
+          <thead>
+            <tr>
+              <th>Izdelek</th>
+              <th>Cena (€)</th>
+              <th>Omejitev</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr>
+                <td>
+                  <input type="hidden" name="productId" value={row.productId} />
+                  {row.hasOrders && (
+                    <input
+                      type="hidden"
+                      name="includedProductIds"
+                      value={row.productId}
+                    />
+                  )}
+                  <label class="round-product">
+                    {row.hasOrders ? (
+                      <input
+                        class="round-check"
+                        type="checkbox"
+                        checked
+                        disabled
+                      />
+                    ) : (
+                      <input
+                        class="round-check"
+                        type="checkbox"
+                        name="includedProductIds"
+                        value={row.productId}
+                        checked={row.isIncluded}
+                      />
+                    )}
+                    <span>
+                      {row.productName}
+                      <span class="round-meta">{row.unit}</span>
+                      <span class="round-meta">
+                        Naročeno: {row.orderedQuantity}
+                      </span>
+                    </span>
+                  </label>
+                </td>
+                <td>
+                  <input
+                    class="round-input"
+                    name="price"
+                    value={row.price}
+                    inputmode="decimal"
+                    aria-label={`Cena za ${row.productName}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    class="round-input"
+                    name="stockLimit"
+                    value={row.stockLimit}
+                    inputmode="numeric"
+                    placeholder="brez"
+                    aria-label={`Omejitev za ${row.productName}`}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </AdminTable>
+      <div class="round-actions">
+        <Button>Shrani krog</Button>
+        <Button href="/admin/krogi" variant="outline">
+          Nazaj
+        </Button>
+      </div>
+    </form>
+  </div>
+</AdminLayout>
+
+<style>
+  .round-page {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .round-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .round-status .round-heading {
+    flex-basis: 100%;
+  }
+
+  .round-heading {
+    font-size: var(--text-2xl);
+  }
+
+  .round-note {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .round-form {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .round-check {
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    accent-color: var(--color-green);
+  }
+
+  .round-product {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+  }
+
+  .round-meta {
+    display: block;
+    color: var(--color-text-soft);
+    font-size: var(--text-xs);
+  }
+
+  .round-input {
+    width: var(--input-narrow);
+    min-height: var(--touch-target);
+    padding: var(--space-2);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+  }
+
+  .round-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>

@@ -1,0 +1,44 @@
+---
+import EmptyState from "../../components/EmptyState.astro";
+import NewsTeaser from "../../components/NewsTeaser.astro";
+import PageBody from "../../components/PageBody.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { listAllNews } from "../../services/newsService";
+
+const posts = await listAllNews();
+---
+
+<BaseLayout title="Novice" description="Novice s Kmetije Kremžar.">
+  <PageIntro title="Novice">
+    <p>Kaj je novega na kmetiji.</p>
+  </PageIntro>
+  <PageBody>
+    {posts.length === 0 ? (
+      <EmptyState>Novic še ni.</EmptyState>
+    ) : (
+      <ul class="news-list">
+        {posts.map((post) => (
+          <li class="news-list-item">
+            <NewsTeaser post={post} headingLevel={2} />
+          </li>
+        ))}
+      </ul>
+    )}
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .news-list {
+    display: grid;
+    gap: var(--space-6);
+    max-width: var(--measure);
+    padding: 0;
+    list-style: none;
+  }
+
+  .news-list-item {
+    padding-bottom: var(--space-6);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+</style>

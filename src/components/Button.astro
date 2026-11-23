@@ -1,0 +1,75 @@
+---
+// A button-styled link (with href) or a form submit button (without href).
+interface Props {
+  href?: string;
+  variant?: "primary" | "outline" | "block";
+}
+
+const { href, variant = "primary" } = Astro.props;
+const classes = ["button", `button-${variant}`];
+---
+
+{href === undefined ? (
+  <button class:list={classes} type="submit">
+    <slot />
+  </button>
+) : (
+  <a class:list={classes} href={href}>
+    <slot />
+  </a>
+)}
+
+<style>
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target);
+    border: var(--border-width) solid var(--color-green);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-wider);
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--easing-standard),
+      color var(--duration-fast) var(--easing-standard),
+      transform var(--duration-fast) var(--easing-standard);
+  }
+
+  .button-primary {
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-full);
+    background-color: var(--color-green);
+    color: var(--color-on-green);
+    font-size: var(--text-sm);
+  }
+
+  .button-primary:hover {
+    transform: scale(var(--hover-scale));
+  }
+
+  .button-outline {
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-full);
+    background-color: transparent;
+    color: var(--color-green);
+    font-size: var(--text-xs);
+  }
+
+  .button-block {
+    width: 100%;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    color: var(--color-green);
+    font-size: var(--text-xs);
+  }
+
+  .button-outline:hover,
+  .button-block:hover {
+    background-color: var(--color-green);
+    color: var(--color-on-green);
+  }
+</style>

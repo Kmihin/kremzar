@@ -1,0 +1,66 @@
+---
+import AdminTable from "../../../components/AdminTable.astro";
+import Badge from "../../../components/Badge.astro";
+import Button from "../../../components/Button.astro";
+import EmptyState from "../../../components/EmptyState.astro";
+import Notice from "../../../components/Notice.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  listNewsForAdmin,
+  newsStatusLabel,
+} from "../../../services/adminNewsService";
+
+const posts = await listNewsForAdmin();
+const notice = Astro.url.searchParams.has("shranjeno")
+  ? "Novica je shranjena."
+  : Astro.url.searchParams.has("izbrisano")
+    ? "Novica je izbrisana."
+    : null;
+---
+
+<AdminLayout title="Novice">
+  <div class="admin-news">
+    {notice !== null && <Notice variant="success">{notice}</Notice>}
+    <Button href="/admin/novice/nov" variant="outline">
+      Nova novica
+    </Button>
+    {posts.length === 0 ? (
+      <EmptyState>Ni še novic.</EmptyState>
+    ) : (
+      <AdminTable>
+        <table>
+          <thead>
+            <tr>
+              <th>Naslov</th>
+              <th>Stanje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {posts.map((post) => (
+              <tr>
+                <td>
+                  <a href={`/admin/novice/${post.id}`}>{post.title}</a>
+                </td>
+                <td>
+                  <Badge variant="outline">{newsStatusLabel(post)}</Badge>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </AdminTable>
+    )}
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-news {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .admin-news :global(.admin-table) {
+    width: 100%;
+  }
+</style>

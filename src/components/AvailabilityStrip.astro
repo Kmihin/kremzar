@@ -1,0 +1,120 @@
+---
+// Green band that scrolls this week's products and their availability.
+// The list is shown twice so the scroll can loop; the copy is aria-hidden.
+import type { StripItem } from "../models/StripItem";
+
+interface Props {
+  isOpen: boolean;
+  items: StripItem[];
+}
+
+const { isOpen, items } = Astro.props;
+---
+
+<div class="availability-strip">
+  {isOpen ? (
+    <div class="availability-strip-viewport">
+      <div class="availability-strip-track">
+        <ul class="availability-strip-list">
+          {items.map((item) => (
+            <li class="availability-strip-item">
+              {item.name}: {item.availabilityLabel}
+              <span class="availability-strip-dot" aria-hidden="true">
+                •
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ul
+          class="availability-strip-list availability-strip-copy"
+          aria-hidden="true"
+        >
+          {items.map((item) => (
+            <li class="availability-strip-item">
+              {item.name}: {item.availabilityLabel}
+              <span class="availability-strip-dot">•</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  ) : (
+    <p class="availability-strip-closed">Naročila so trenutno zaprta</p>
+  )}
+</div>
+
+<style>
+  .availability-strip {
+    padding-block: var(--space-3);
+    background-color: var(--color-green);
+    color: var(--color-on-green);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .availability-strip-viewport {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .availability-strip-track {
+    display: flex;
+    width: max-content;
+    min-width: 200%;
+    animation: availability-strip-scroll var(--duration-marquee) linear infinite;
+  }
+
+  .availability-strip-list {
+    display: flex;
+    flex: 1 0 0;
+    justify-content: space-around;
+    gap: var(--space-8);
+    padding: 0 var(--space-5);
+    list-style: none;
+  }
+
+  .availability-strip-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .availability-strip-dot {
+    color: var(--color-gold);
+  }
+
+  .availability-strip-closed {
+    padding-inline: var(--content-padding);
+    text-align: center;
+  }
+
+  @keyframes availability-strip-scroll {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .availability-strip-track {
+      min-width: 0;
+      width: auto;
+      animation: none;
+    }
+
+    .availability-strip-list {
+      flex-wrap: wrap;
+      justify-content: center;
+      white-space: normal;
+    }
+
+    .availability-strip-copy {
+      display: none;
+    }
+  }
+</style>

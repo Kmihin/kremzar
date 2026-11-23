@@ -1,0 +1,197 @@
+---
+// Photo upload. The page script shrinks the chosen photo in the browser to
+// at most 1600 px and 500 KB (WebP, or JPEG where the browser cannot make
+// WebP), puts it back into the file field and fills in its pixel size.
+// Without JavaScript the server refuses the photo, so the hint says so.
+import { maxImageBytes, maxImageSide } from "../consts/images";
+
+interface Props {
+  label: string;
+  currentImageId?: number | null;
+  errors?: string[];
+  required?: boolean;
+}
+
+const {
+  label,
+  currentImageId = null,
+  errors = [],
+  required = false,
+} = Astro.props;
+const hasErrors = errors.length > 0;
+---
+
+<div
+  class:list={["image-field", { "has-error": hasErrors }]}
+  data-image-field
+  data-max-bytes={maxImageBytes}
+  data-max-side={maxImageSide}
+>
+  <label class="image-field-label" for="field-image">
+    {label}
+  </label>
+  {currentImageId !== null && (
+    <img
+      class="image-field-current"
+      src={`/media/${currentImageId}`}
+      alt="Trenutna fotografija"
+      width="160"
+      height="160"
+    />
+  )}
+  <input
+    class="image-field-input"
+    id="field-image"
+    type="file"
+    name="image"
+    accept="image/*"
+    required={required}
+    aria-describedby="field-image-status"
+  />
+  <input type="hidden" name="imageWidth" value="" data-image-width />
+  <input type="hidden" name="imageHeight" value="" data-image-height />
+  <p class="image-field-hint" id="field-image-status" data-image-status>
+    Fotografija se pred pošiljanjem pomanjša. Potrebuje JavaScript.
+  </p>
+  {hasErrors && <p class="image-field-error">{errors.join(" ")}</p>}
+</div>
+
+<script>
+  import type { ShrunkImage } from "../models/ShrunkImage";
+
+  // Encodes the canvas at falling quality until it fits. Returns null when
+  // the browser cannot make this type or it never fits.
+  async function encode(
+    canvas: HTMLCanvasElement,
+    type: string,
+    maxBytes: number,
+  ): Promise<Blob | null> {
+    for (let quality = 0.85; quality > 0.4; quality -= 0.1) {
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, type, quality),
+      );
+      if (blob === null || blob.type !== type) {
+        return null;
+      }
+      if (blob.size <= maxBytes) {
+        return blob;
+      }
+    }
+    return null;
+  }
+
+  // Draws the photo at most maxSide wide and high, and encodes it as WebP,
+  // or JPEG where the browser cannot make WebP.
+  async function shrink(
+    file: File,
+    maxSide: number,
+    maxBytes: number,
+  ): Promise<ShrunkImage | null> {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas
+      .getContext("2d")
+      ?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob =
+      (await encode(canvas, "image/webp", maxBytes)) ??
+      (await encode(canvas, "image/jpeg", maxBytes));
+    if (blob === null) {
+      return null;
+    }
+    return { blob, width: canvas.width, height: canvas.height };
+  }
+
+  function setUpImageField(field: HTMLElement): void {
+    const input = field.querySelector<HTMLInputElement>('input[type="file"]');
+    const status = field.querySelector<HTMLElement>("[data-image-status]");
+    const widthInput =
+      field.querySelector<HTMLInputElement>("[data-image-width]");
+    const heightInput = field.querySelector<HTMLInputElement>(
+      "[data-image-height]",
+    );
+    if (!input || !status || !widthInput || !heightInput) {
+      return;
+    }
+    const submitButtons = input.form?.querySelectorAll<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    const maxSide = Number(field.dataset.maxSide);
+    const maxBytes = Number(field.dataset.maxBytes);
+    status.textContent = "Fotografija se pred pošiljanjem pomanjša.";
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      widthInput.value = "";
+      heightInput.value = "";
+      if (!file) {
+        return;
+      }
+      status.textContent = "Pripravljam fotografijo …";
+      submitButtons?.forEach((button) => (button.disabled = true));
+      const result = await shrink(file, maxSide, maxBytes).catch(() => null);
+      submitButtons?.forEach((button) => (button.disabled = false));
+      if (result === null) {
+        input.value = "";
+        status.textContent =
+          "Te fotografije ni mogoče pripraviti. Izberite drugo.";
+        return;
+      }
+      const extension = result.blob.type === "image/webp" ? "webp" : "jpg";
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File([result.blob], `fotografija.${extension}`, {
+          type: result.blob.type,
+        }),
+      );
+      input.files = transfer.files;
+      widthInput.value = String(result.width);
+      heightInput.value = String(result.height);
+      status.textContent = `Pripravljeno: ${result.width} × ${result.height} px, ${Math.round(result.blob.size / 1024)} KB.`;
+    });
+  }
+
+  for (const field of document.querySelectorAll<HTMLElement>(
+    "[data-image-field]",
+  )) {
+    setUpImageField(field);
+  }
+</script>
+
+<style>
+  .image-field {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+
+  .image-field-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .image-field-current {
+    width: var(--image-preview-size);
+    height: var(--image-preview-size);
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+  }
+
+  .image-field-input {
+    max-width: 100%;
+    font-size: var(--text-sm);
+  }
+
+  .image-field-hint {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .image-field-error {
+    color: var(--color-error);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+</style>

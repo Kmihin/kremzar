@@ -1,0 +1,45 @@
+---
+// Small pill label, for example "Na voljo", "Še 4" or "Razprodano".
+interface Props {
+  variant: "status" | "sold-out" | "outline";
+}
+
+const { variant } = Astro.props;
+---
+
+<span class:list={["badge", `badge-${variant}`]}>
+  <slot />
+</span>
+
+<style>
+  .badge {
+    display: inline-block;
+    border-radius: var(--radius-full);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-wider);
+    line-height: var(--leading-snug);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .badge-status {
+    padding: var(--space-1) var(--space-3);
+    background-color: var(--color-badge-bg);
+    color: var(--color-green);
+    backdrop-filter: blur(var(--backdrop-blur));
+  }
+
+  .badge-outline {
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--color-control-border);
+    color: var(--color-green);
+  }
+
+  .badge-sold-out {
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-green);
+    color: var(--color-on-green);
+    letter-spacing: var(--tracking-widest);
+  }
+</style>

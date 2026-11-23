@@ -1,0 +1,33 @@
+---
+// A labelled checkbox.
+interface Props {
+  label: string;
+  name: string;
+  checked: boolean;
+}
+
+const { label, name, checked } = Astro.props;
+---
+
+<label class="checkbox-field">
+  <input type="checkbox" name={name} checked={checked} />
+  <span>{label}</span>
+</label>
+
+<style>
+  .checkbox-field {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--touch-target);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+  }
+
+  .checkbox-field input {
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    accent-color: var(--color-green);
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+// The submit button with the order total. On phones the bar sticks to the
+// bottom of the screen while the form is in view. The total stays hidden
+// until the page script fills it in; without JavaScript the total appears on
+// the confirmation page.
+import { formatPrice } from "../services/formatService";
+import Button from "./Button.astro";
+---
+
+<div class="order-bar">
+  <p class="order-bar-total" data-order-total-wrap hidden>
+    Skupaj
+    <output class="order-bar-amount" data-order-total aria-live="polite">
+      {formatPrice(0)}
+    </output>
+  </p>
+  <Button>Oddaj naročilo</Button>
+</div>
+
+<style>
+  .order-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-inline: calc(-1 * var(--content-padding));
+    padding: var(--space-4) var(--content-padding);
+    border-top: var(--border-width) solid var(--color-line);
+    background-color: var(--color-cream);
+  }
+
+  .order-bar-total {
+    display: grid;
+    color: var(--color-text-soft);
+    font-size: var(--text-xs);
+  }
+
+  .order-bar-total[hidden] {
+    display: none;
+  }
+
+  .order-bar-amount {
+    color: var(--color-green);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+  }
+
+  @media (min-width: 48rem) {
+    .order-bar {
+      position: static;
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+</style>

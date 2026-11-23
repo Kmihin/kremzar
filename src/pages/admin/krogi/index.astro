@@ -1,0 +1,59 @@
+---
+import AdminTable from "../../../components/AdminTable.astro";
+import Badge from "../../../components/Badge.astro";
+import Button from "../../../components/Button.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  listRoundsForAdmin,
+  roundStatusLabel,
+} from "../../../services/adminRoundService";
+import { formatDate } from "../../../services/formatService";
+
+const rounds = await listRoundsForAdmin();
+---
+
+<AdminLayout title="Krogi">
+  <div class="admin-rounds">
+    <Button href="/admin/krogi/nov" variant="outline">
+      Nov krog
+    </Button>
+    <AdminTable>
+      <table>
+        <thead>
+          <tr>
+            <th>Naslov</th>
+            <th>Stanje</th>
+            <th>Ustvarjen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rounds.map((round) => (
+            <tr>
+              <td>
+                <a href={`/admin/krogi/${round.id}`}>{round.title}</a>
+              </td>
+              <td>
+                <Badge variant="outline">
+                  {roundStatusLabel(round.status)}
+                </Badge>
+              </td>
+              <td>{formatDate(round.createdAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </AdminTable>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-rounds {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .admin-rounds :global(.admin-table) {
+    width: 100%;
+  }
+</style>

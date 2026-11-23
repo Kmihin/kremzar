@@ -1,0 +1,138 @@
+---
+// Product card: photo with availability badge, name, unit, price and a link
+// to the product page. Sold out: grey photo with a "Razprodano" veil.
+import type { ProductCardView } from "../models/ProductCardView";
+import Badge from "./Badge.astro";
+import Button from "./Button.astro";
+import ProductPhoto from "./ProductPhoto.astro";
+
+interface Props {
+  card: ProductCardView;
+  headingLevel: 2 | 3;
+}
+
+const { card, headingLevel } = Astro.props;
+const Heading = headingLevel === 2 ? "h2" : "h3";
+const href = `/izdelki/${card.slug}`;
+---
+
+<article class:list={["product-card", { "is-sold-out": card.isSoldOut }]}>
+  <a class="product-card-photo" href={href}>
+    <ProductPhoto
+      slug={card.slug}
+      name={card.name}
+      imageId={card.imageId}
+      isSoldOut={card.isSoldOut}
+      loading="lazy"
+    />
+    {card.isSoldOut ? (
+      <span class="product-card-veil">
+        <Badge variant="sold-out">Razprodano</Badge>
+      </span>
+    ) : (
+      card.availabilityLabel !== null && (
+        <span class="product-card-badge">
+          <Badge variant="status">{card.availabilityLabel}</Badge>
+        </span>
+      )
+    )}
+  </a>
+  <div class="product-card-body">
+    <div class="product-card-head">
+      <div>
+        <Heading class="product-card-name">{card.name}</Heading>
+        <p class="product-card-unit">{card.unit}</p>
+      </div>
+      <span class="product-card-price">{card.priceLabel}</span>
+    </div>
+    {!card.isSoldOut && (
+      <div class="product-card-action">
+        <Button href={href} variant="block">
+          Podrobnosti izdelka
+        </Button>
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .product-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-card-photo {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-white);
+  }
+
+  .product-card-photo :global(.product-photo) {
+    transition: transform var(--duration-slow) var(--easing-standard);
+  }
+
+  .product-card:not(.is-sold-out)
+    .product-card-photo:hover
+    :global(.product-photo) {
+    transform: scale(var(--hover-scale));
+  }
+
+  .product-card-badge {
+    position: absolute;
+    top: var(--space-4);
+    left: var(--space-4);
+  }
+
+  .product-card-veil {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background-color: var(--color-sold-out-veil);
+  }
+
+  .product-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    margin-top: var(--space-5);
+  }
+
+  .product-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .product-card-name {
+    font-family: var(--font-body);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+  }
+
+  .product-card-unit {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+    font-style: italic;
+  }
+
+  .product-card-price {
+    color: var(--color-gold-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    white-space: nowrap;
+  }
+
+  .is-sold-out .product-card-name,
+  .is-sold-out .product-card-price {
+    color: var(--color-text-soft);
+  }
+
+  .product-card-action {
+    margin-top: var(--space-4);
+  }
+</style>

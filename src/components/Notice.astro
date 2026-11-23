@@ -1,0 +1,35 @@
+---
+// A message box: a success note or an error for the whole form.
+interface Props {
+  variant: "success" | "error";
+}
+
+const { variant } = Astro.props;
+---
+
+<p
+  class:list={["notice", `notice-${variant}`]}
+  role={variant === "error" ? "alert" : "status"}
+>
+  <slot />
+</p>
+
+<style>
+  .notice {
+    padding: var(--space-3) var(--space-4);
+    border: var(--border-width) solid currentColor;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .notice-success {
+    background-color: var(--color-tint);
+    color: var(--color-green);
+  }
+
+  .notice-error {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+  }
+</style>

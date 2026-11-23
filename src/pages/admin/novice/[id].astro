@@ -1,0 +1,79 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Button from "../../../components/Button.astro";
+import ConfirmForm from "../../../components/ConfirmForm.astro";
+import NewsForm from "../../../components/NewsForm.astro";
+import Notice from "../../../components/Notice.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import {
+  findNewsForAdmin,
+  newsFormValuesFromForm,
+  newsFormValuesFromPost,
+} from "../../../services/adminNewsService";
+import { messageForActionError } from "../../../services/errorService";
+
+const saveResult = Astro.getActionResult(actions.admin.saveNews);
+if (saveResult !== undefined && saveResult.error === undefined) {
+  return Astro.redirect("/admin/novice?shranjeno");
+}
+const deleteResult = Astro.getActionResult(actions.admin.deleteNews);
+if (deleteResult !== undefined && deleteResult.error === undefined) {
+  return Astro.redirect("/admin/novice?izbrisano");
+}
+
+const newsId = Number(Astro.params.id);
+const post = Number.isInteger(newsId) ? await findNewsForAdmin(newsId) : null;
+if (post === null) {
+  return new Response(null, { status: 404 });
+}
+
+let values = newsFormValuesFromPost(post);
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (saveResult?.error !== undefined) {
+  values = newsFormValuesFromForm(await Astro.request.formData());
+  if (isInputError(saveResult.error)) {
+    fieldErrors = saveResult.error.fields;
+  } else {
+    errorMessage = messageForActionError(saveResult.error);
+  }
+}
+const deleteError =
+  deleteResult?.error === undefined
+    ? null
+    : messageForActionError(deleteResult.error);
+---
+
+<AdminLayout title={post.title}>
+  <div class="admin-news-edit">
+    {post.publishedAt !== null && (
+      <Button href={`/novice/${post.slug}`} variant="outline">
+        Poglej na strani
+      </Button>
+    )}
+    <NewsForm
+      action={actions.admin.saveNews}
+      values={values}
+      fieldErrors={fieldErrors}
+      errorMessage={errorMessage}
+      newsId={post.id}
+      imageId={post.imageId}
+    />
+    {deleteError !== null && <Notice variant="error">{deleteError}</Notice>}
+    <ConfirmForm
+      action={actions.admin.deleteNews}
+      confirmLabel="Res izbriši novico in njeno fotografijo."
+      buttonLabel="Izbriši novico"
+    >
+      <input type="hidden" name="newsId" value={post.id} />
+    </ConfirmForm>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-news-edit {
+    display: grid;
+    gap: var(--space-8);
+    justify-items: start;
+  }
+</style>

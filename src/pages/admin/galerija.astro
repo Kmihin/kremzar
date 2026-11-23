@@ -1,0 +1,198 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Button from "../../components/Button.astro";
+import ConfirmForm from "../../components/ConfirmForm.astro";
+import EmptyState from "../../components/EmptyState.astro";
+import Field from "../../components/Field.astro";
+import ImageField from "../../components/ImageField.astro";
+import Notice from "../../components/Notice.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { messageForActionError } from "../../services/errorService";
+import { listGallery } from "../../services/galleryService";
+
+const addResult = Astro.getActionResult(actions.admin.addGalleryPhoto);
+const saveResult = Astro.getActionResult(actions.admin.saveGalleryPhoto);
+const deleteResult = Astro.getActionResult(actions.admin.deleteGalleryPhoto);
+if (addResult !== undefined && addResult.error === undefined) {
+  return Astro.redirect("/admin/galerija?dodano");
+}
+if (saveResult !== undefined && saveResult.error === undefined) {
+  return Astro.redirect("/admin/galerija?shranjeno");
+}
+if (deleteResult !== undefined && deleteResult.error === undefined) {
+  return Astro.redirect("/admin/galerija?izbrisano");
+}
+
+let caption = "";
+let sortOrder = "0";
+let addErrors: Record<string, string[] | undefined> = {};
+let addError: string | null = null;
+if (addResult?.error !== undefined) {
+  const formData = await Astro.request.formData();
+  caption = String(formData.get("caption") ?? "");
+  sortOrder = String(formData.get("sortOrder") ?? "0");
+  if (isInputError(addResult.error)) {
+    addErrors = addResult.error.fields;
+  } else {
+    addError = messageForActionError(addResult.error);
+  }
+}
+
+// A failed save or delete of one photo is shown above the list.
+let listError: string | null = null;
+const listActionError = saveResult?.error ?? deleteResult?.error;
+if (listActionError !== undefined) {
+  listError = isInputError(listActionError)
+    ? (Object.values(listActionError.fields).flat()[0] ??
+      messageForActionError(listActionError))
+    : messageForActionError(listActionError);
+}
+
+const items = await listGallery();
+const notice = Astro.url.searchParams.has("dodano")
+  ? "Fotografija je dodana."
+  : Astro.url.searchParams.has("shranjeno")
+    ? "Shranjeno."
+    : Astro.url.searchParams.has("izbrisano")
+      ? "Fotografija je izbrisana."
+      : null;
+---
+
+<AdminLayout title="Galerija">
+  <div class="admin-gallery">
+    {notice !== null && <Notice variant="success">{notice}</Notice>}
+
+    <section class="admin-gallery-section" aria-labelledby="add-title">
+      <h2 id="add-title" class="admin-gallery-heading">
+        Nova fotografija
+      </h2>
+      <form
+        class="admin-gallery-add"
+        method="POST"
+        action={actions.admin.addGalleryPhoto}
+        enctype="multipart/form-data"
+      >
+        {addError !== null && <Notice variant="error">{addError}</Notice>}
+        <ImageField label="Fotografija" errors={addErrors.image} required />
+        <Field
+          label="Opis"
+          name="caption"
+          value={caption}
+          errors={addErrors.caption}
+          hint="Kratek opis. Prikazan je pod fotografijo in ga slišijo bralniki zaslona."
+          required
+        />
+        <Field
+          label="Vrstni red"
+          name="sortOrder"
+          value={sortOrder}
+          errors={addErrors.sortOrder}
+          inputmode="numeric"
+          hint="Manjše število je prej."
+          required
+        />
+        <Button>Dodaj fotografijo</Button>
+      </form>
+    </section>
+
+    <section class="admin-gallery-section" aria-labelledby="list-title">
+      <h2 id="list-title" class="admin-gallery-heading">
+        Fotografije
+      </h2>
+      {listError !== null && <Notice variant="error">{listError}</Notice>}
+      {items.length === 0 ? (
+        <EmptyState>Galerija je prazna.</EmptyState>
+      ) : (
+        <ul class="admin-gallery-list">
+          {items.map((item) => (
+            <li class="admin-gallery-item">
+              <img
+                class="admin-gallery-photo"
+                src={`/media/${item.imageId}`}
+                width={item.width}
+                height={item.height}
+                alt={item.caption}
+                loading="lazy"
+              />
+              <form
+                class="admin-gallery-edit"
+                method="POST"
+                action={actions.admin.saveGalleryPhoto}
+              >
+                <input type="hidden" name="photoId" value={item.id} />
+                <Field
+                  label="Opis"
+                  name="caption"
+                  id={`caption-${item.id}`}
+                  value={item.caption}
+                  required
+                />
+                <Field
+                  label="Vrstni red"
+                  name="sortOrder"
+                  id={`sort-order-${item.id}`}
+                  value={String(item.sortOrder)}
+                  inputmode="numeric"
+                  required
+                />
+                <Button variant="outline">Shrani</Button>
+              </form>
+              <ConfirmForm
+                action={actions.admin.deleteGalleryPhoto}
+                confirmLabel="Res izbriši to fotografijo."
+                buttonLabel="Izbriši"
+              >
+                <input type="hidden" name="photoId" value={item.id} />
+              </ConfirmForm>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-gallery,
+  .admin-gallery-section {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .admin-gallery-heading {
+    font-size: var(--text-2xl);
+  }
+
+  .admin-gallery-add,
+  .admin-gallery-edit {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    max-width: var(--measure);
+  }
+
+  .admin-gallery-add :global(.field),
+  .admin-gallery-edit :global(.field) {
+    width: 100%;
+  }
+
+  .admin-gallery-list {
+    display: grid;
+    gap: var(--space-8);
+    padding: 0;
+    list-style: none;
+  }
+
+  .admin-gallery-item {
+    display: grid;
+    gap: var(--space-4);
+    padding-bottom: var(--space-8);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  .admin-gallery-photo {
+    width: var(--image-preview-size);
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+</style>

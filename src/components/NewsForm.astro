@@ -1,0 +1,102 @@
+---
+// News form for creating and editing. Shows the values as typed and the
+// error messages next to the fields.
+import type { NewsFormValues } from "../models/NewsFormValues";
+import Button from "./Button.astro";
+import CheckboxField from "./CheckboxField.astro";
+import Field from "./Field.astro";
+import ImageField from "./ImageField.astro";
+import Notice from "./Notice.astro";
+
+interface Props {
+  action: string;
+  values: NewsFormValues;
+  fieldErrors: Record<string, string[] | undefined>;
+  errorMessage: string | null;
+  newsId?: number;
+  imageId?: number | null;
+}
+
+const {
+  action,
+  values,
+  fieldErrors,
+  errorMessage,
+  newsId,
+  imageId = null,
+} = Astro.props;
+---
+
+<form
+  class="news-form"
+  method="POST"
+  action={action}
+  enctype="multipart/form-data"
+>
+  {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+  {newsId !== undefined && <input type="hidden" name="newsId" value={newsId} />}
+  <Field
+    label="Naslov"
+    name="title"
+    value={values.title}
+    errors={fieldErrors.title}
+    required
+  />
+  <Field
+    label="Naslov v povezavi"
+    name="slug"
+    value={values.slug}
+    errors={fieldErrors.slug}
+    hint="Prazno: nastane iz naslova."
+  />
+  <Field
+    label="Besedilo"
+    name="body"
+    value={values.body}
+    errors={fieldErrors.body}
+    hint="Prazna vrstica začne nov odstavek."
+    multiline
+    required
+  />
+  <ImageField
+    label="Fotografija (neobvezno)"
+    currentImageId={imageId}
+    errors={fieldErrors.image}
+  />
+  {imageId !== null && (
+    <CheckboxField
+      label="Odstrani fotografijo"
+      name="removeImage"
+      checked={false}
+    />
+  )}
+  <CheckboxField
+    label="Objavljeno (vidno na strani)"
+    name="isPublished"
+    checked={values.isPublished}
+  />
+  <div class="news-form-actions">
+    <Button>Shrani</Button>
+    <Button href="/admin/novice" variant="outline">
+      Prekliči
+    </Button>
+  </div>
+</form>
+
+<style>
+  .news-form {
+    display: grid;
+    gap: var(--space-5);
+    max-width: var(--measure);
+  }
+
+  .news-form :global(textarea) {
+    min-height: var(--textarea-tall);
+  }
+
+  .news-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>

@@ -1,0 +1,64 @@
+---
+import AvailabilityStrip from "../../components/AvailabilityStrip.astro";
+import EmptyState from "../../components/EmptyState.astro";
+import PageBody from "../../components/PageBody.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import ProductCard from "../../components/ProductCard.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { loadOffer, toStripItems } from "../../services/offerService";
+import { listCatalogueCards } from "../../services/productService";
+
+const offer = await loadOffer();
+const cards = await listCatalogueCards(offer);
+---
+
+<BaseLayout
+  title="Izdelki"
+  description="Domače mleko, jogurt, sir in kruh s Kmetije Kremžar."
+>
+  <PageIntro title="Naši izdelki">
+    <p>
+      Vse pripravimo doma, na naši kmetiji. Pri vsakem izdelku najdete
+      sestavine, alergene in ceno za navedeno enoto.
+    </p>
+  </PageIntro>
+  <AvailabilityStrip
+    isOpen={offer.isOpen}
+    items={toStripItems(offer.products)}
+  />
+  <PageBody>
+    {cards.length === 0 ? (
+      <EmptyState>Izdelki bodo kmalu objavljeni.</EmptyState>
+    ) : (
+      <ul class="card-grid">
+        {cards.map((card) => (
+          <li>
+            <ProductCard card={card} headingLevel={2} />
+          </li>
+        ))}
+      </ul>
+    )}
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .card-grid {
+    display: grid;
+    gap: var(--space-8) var(--space-6);
+    margin-top: var(--space-8);
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 40rem) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .card-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,125 @@
+/*
+  Design tokens. The only place for colours, font sizes and spacing values.
+  Based on the design reference (deep barn green, warm cream, harvest gold).
+  Contrast (WCAG 2.2) measured on --color-cream:
+  green 14.4:1, text-strong 7.6:1, text-soft 5.6:1 (5.3:1 on tint),
+  gold-ink 5.4:1 (5.0:1 on tint), control-border 3.1:1.
+  Plain gold is 2.5:1, below even the 3:1 for large text: it is used only for
+  the wordmark (a logo) and for decoration, never for text.
+  On --color-green: cream 14.4:1, on-green-soft 9.7:1, gold 5.9:1.
+  error 5.2:1 on cream, 5.3:1 on white, 4.8:1 on error-bg.
+*/
+:root {
+  /* Colours */
+  --color-green: #172c1f;
+  --color-cream: #fdfcf7;
+  --color-white: #ffffff;
+  --color-gold: #bd9f66;
+  --color-gold-ink: #80642b;
+  --color-text: var(--color-green);
+  --color-text-strong: #45564a;
+  --color-text-soft: #5c6a60;
+  --color-tint: #f2f2ec;
+  --color-line: #e1e3dd;
+  --color-line-faint: #eff0ea;
+  --color-control-border: #8a948b;
+  --color-on-green: var(--color-cream);
+  --color-on-green-soft: #cfd2cc;
+  --color-line-on-green: #334539;
+  --color-success: #3b9555;
+  --color-header-bg: rgb(253 252 247 / 0.8);
+  --color-sold-out-veil: rgb(23 44 31 / 0.2);
+  --color-badge-bg: rgb(255 255 255 / 0.9);
+  --color-focus: var(--color-gold-ink);
+  --color-error: #c9302d;
+  --color-error-bg: #faf0eb;
+
+  /* Fonts */
+  --font-display: "Playfair Display Variable", Georgia, serif;
+  --font-body:
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+
+  /* Type scale */
+  --text-label: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-hero: clamp(3rem, 2rem + 4vw, 4.5rem);
+  --text-page-title: clamp(2.25rem, 1.8rem + 2vw, 3rem);
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.7;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.2em;
+  --measure: 40rem;
+  --measure-short: 24rem;
+  --gallery-column-min: 16rem;
+  --fact-label-width: 10rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+  --space-10: 6rem;
+  --space-section: clamp(4rem, 3rem + 4vw, 6rem);
+
+  /* Layout */
+  --content-width: 80rem;
+  --content-width-narrow: 48rem;
+  --content-padding: 1.5rem;
+  --touch-target: 2.75rem;
+  --status-dot: 0.5rem;
+  --checkbox-size: 1.25rem;
+  --admin-width: 64rem;
+  --input-narrow: 5rem;
+  --image-preview-size: 10rem;
+  --textarea-tall: 16rem;
+  --step-circle: 2.5rem;
+  --header-height: 4.5rem;
+
+  /* Shape */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 999px;
+  --border-width: 1px;
+  --backdrop-blur: 12px;
+
+  /* Focus and links */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --underline-offset: 0.2em;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-slow: 500ms;
+  --duration-reveal: 700ms;
+  --duration-marquee: 34s;
+  --duration-pulse: 2s;
+  --easing-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --easing-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+  --hover-scale: 1.05;
+  --hover-scale-soft: 1.02;
+}

@@ -1,0 +1,188 @@
+---
+// A product row of the order form: name, price, availability and the
+// quantity field. The minus and plus buttons stay hidden until the page
+// script shows them; without JavaScript the number field works alone.
+import type { OrderFormRow } from "../models/OrderFormRow";
+import Badge from "./Badge.astro";
+
+interface Props {
+  row: OrderFormRow;
+}
+
+const { row } = Astro.props;
+const inputId = `quantity-${row.roundProductId}`;
+const errorId = `${inputId}-error`;
+const hasError = row.error !== null;
+---
+
+<li class:list={["order-row", { "is-sold-out": row.isSoldOut }]}>
+  <div class="order-row-info">
+    {row.isSoldOut ? (
+      <p class="order-row-name">{row.name}</p>
+    ) : (
+      <label class="order-row-name" for={inputId}>
+        {row.name}
+      </label>
+    )}
+    <p class="order-row-price">
+      {row.priceLabel} <span class="order-row-unit">/ {row.unit}</span>
+    </p>
+  </div>
+
+  <div class="order-row-amount">
+    {row.isSoldOut ? (
+      <Badge variant="sold-out">Razprodano</Badge>
+    ) : (
+      <>
+        <input type="hidden" name="roundProductId" value={row.roundProductId} />
+        <div class="order-stepper">
+          <button
+            class="order-stepper-button"
+            type="button"
+            data-step="-1"
+            data-for={inputId}
+            aria-label={`Manj: ${row.name}`}
+            hidden
+          >
+            −
+          </button>
+          <input
+            class="order-stepper-input"
+            id={inputId}
+            type="number"
+            name="quantity"
+            value={row.quantity}
+            min="0"
+            max={row.max}
+            step="1"
+            inputmode="numeric"
+            data-price-cents={row.priceCents}
+            aria-invalid={hasError ? "true" : undefined}
+            aria-describedby={hasError ? errorId : undefined}
+          />
+          <button
+            class="order-stepper-button"
+            type="button"
+            data-step="1"
+            data-for={inputId}
+            aria-label={`Več: ${row.name}`}
+            hidden
+          >
+            +
+          </button>
+        </div>
+        <p class="order-row-availability">{row.availabilityLabel}</p>
+      </>
+    )}
+  </div>
+
+  {hasError && (
+    <p class="order-row-error" id={errorId}>
+      {row.error}
+    </p>
+  )}
+</li>
+
+<style>
+  .order-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-4);
+    align-items: center;
+    padding-block: var(--space-5);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  .order-row-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
+  }
+
+  .order-row-price {
+    margin-top: var(--space-1);
+    color: var(--color-gold-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+  }
+
+  .order-row-unit {
+    color: var(--color-text-soft);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+  }
+
+  .order-row-amount {
+    display: grid;
+    gap: var(--space-1);
+    justify-items: end;
+  }
+
+  .order-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .order-stepper-button {
+    display: grid;
+    place-items: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-full);
+    background-color: var(--color-white);
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
+    cursor: pointer;
+  }
+
+  .order-stepper-button[hidden] {
+    display: none;
+  }
+
+  .order-stepper-button:hover {
+    border-color: var(--color-green);
+  }
+
+  .order-stepper-input {
+    width: var(--input-narrow);
+    min-height: var(--touch-target);
+    padding: var(--space-2);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+    text-align: center;
+  }
+
+  .order-stepper-input {
+    appearance: textfield;
+  }
+
+  .order-stepper-input::-webkit-inner-spin-button,
+  .order-stepper-input::-webkit-outer-spin-button {
+    appearance: none;
+  }
+
+  .order-stepper-input[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+
+  .order-row-availability {
+    color: var(--color-text-soft);
+    font-size: var(--text-xs);
+  }
+
+  .order-row-error {
+    grid-column: 1 / -1;
+    color: var(--color-error);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .is-sold-out .order-row-name,
+  .is-sold-out .order-row-price {
+    color: var(--color-text-soft);
+  }
+</style>

@@ -1,0 +1,48 @@
+---
+// A form for an action that cannot be undone (cancel, delete): the button
+// only works once the checkbox is ticked. The hidden fields go in the slot.
+import Button from "./Button.astro";
+
+interface Props {
+  action: string;
+  confirmLabel: string;
+  buttonLabel: string;
+}
+
+const { action, confirmLabel, buttonLabel } = Astro.props;
+---
+
+<form class="confirm-form" method="POST" action={action}>
+  <slot />
+  <label class="confirm-form-check">
+    <input type="checkbox" required />
+    {confirmLabel}
+  </label>
+  <Button variant="outline">{buttonLabel}</Button>
+</form>
+
+<style>
+  .confirm-form {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    max-width: var(--measure);
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .confirm-form-check {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    font-size: var(--text-sm);
+  }
+
+  .confirm-form-check input {
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    flex-shrink: 0;
+    accent-color: var(--color-green);
+  }
+</style>

@@ -1,0 +1,165 @@
+---
+// The order on its confirmation page: lines, total, payment, the round's
+// delivery info and a note that the link shows the order.
+import { OrderStatus } from "../consts/statuses";
+import type { OrderConfirmation } from "../models/OrderConfirmation";
+import {
+  formatDate,
+  formatPrice,
+  splitParagraphs,
+} from "../services/formatService";
+import Button from "./Button.astro";
+import Notice from "./Notice.astro";
+
+interface Props {
+  confirmation: OrderConfirmation;
+}
+
+const { order, items } = Astro.props.confirmation;
+const isCancelled = order.status === OrderStatus.cancelled;
+const deliveryParagraphs = splitParagraphs(order.deliveryInfo);
+---
+
+<div class="confirmation">
+  {isCancelled && <Notice variant="error">To naročilo je preklicano.</Notice>}
+  <section class="confirmation-panel" aria-labelledby="summary-title">
+    <p class="confirmation-label">{order.roundTitle}</p>
+    <h2 id="summary-title" class="confirmation-title">
+      Naročilo za {order.customerName}
+    </h2>
+    <p class="confirmation-date">Oddano {formatDate(order.createdAt)}</p>
+    <ul class="confirmation-items">
+      {items.map((item) => (
+        <li class="confirmation-item">
+          <span>
+            {item.productName}
+            <span class="confirmation-unit">
+              {item.quantity} × {formatPrice(item.unitPriceCents)} / {item.unit}
+            </span>
+          </span>
+          <span class="confirmation-line-total">
+            {formatPrice(item.unitPriceCents * item.quantity)}
+          </span>
+        </li>
+      ))}
+    </ul>
+    <p class="confirmation-total">
+      Skupaj
+      <span class="confirmation-total-amount">
+        {formatPrice(order.totalCents)}
+      </span>
+    </p>
+    <p class="confirmation-payment">Plačilo z gotovino ob prevzemu.</p>
+  </section>
+
+  {deliveryParagraphs.length > 0 && (
+    <section class="confirmation-delivery" aria-labelledby="delivery-title">
+      <h2 id="delivery-title" class="confirmation-subtitle">
+        Dostava
+      </h2>
+      {deliveryParagraphs.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+    </section>
+  )}
+
+  <p class="confirmation-note">
+    Povezavo do te strani si lahko shranite. Na njej je vedno vaše naročilo.
+  </p>
+  <Button href="/" variant="outline">
+    Na začetno stran
+  </Button>
+</div>
+<style>
+  .confirmation {
+    display: grid;
+    gap: var(--space-6);
+    justify-items: start;
+    max-width: var(--measure);
+  }
+
+  .confirmation-panel {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-5);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-white);
+  }
+
+  .confirmation-label {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .confirmation-title {
+    font-size: var(--text-2xl);
+  }
+
+  .confirmation-date {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .confirmation-items {
+    margin-top: var(--space-3);
+    padding: 0;
+    border-top: var(--border-width) solid var(--color-line);
+    list-style: none;
+  }
+
+  .confirmation-item {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-3);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  .confirmation-unit {
+    display: block;
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .confirmation-line-total {
+    white-space: nowrap;
+  }
+
+  .confirmation-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    font-weight: var(--weight-semibold);
+  }
+
+  .confirmation-total-amount {
+    color: var(--color-gold-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-regular);
+  }
+
+  .confirmation-payment,
+  .confirmation-note {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .confirmation-delivery {
+    display: grid;
+    gap: var(--space-3);
+    color: var(--color-text-strong);
+    line-height: var(--leading-relaxed);
+  }
+
+  .confirmation-subtitle {
+    color: var(--color-text);
+    font-size: var(--text-2xl);
+  }
+</style>

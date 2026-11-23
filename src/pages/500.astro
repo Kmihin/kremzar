@@ -1,0 +1,16 @@
+---
+// Shown for unexpected server errors. The error itself is never shown.
+import Button from "../components/Button.astro";
+import PageBody from "../components/PageBody.astro";
+import PageIntro from "../components/PageIntro.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Napaka">
+  <PageIntro title="Prišlo je do napake">
+    <p>Stran se ni naložila. Poskusite znova čez nekaj trenutkov.</p>
+  </PageIntro>
+  <PageBody>
+    <Button href="/">Na prvo stran</Button>
+  </PageBody>
+</BaseLayout>

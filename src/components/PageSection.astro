@@ -1,0 +1,39 @@
+---
+// Full-width page section with the content width and section spacing.
+interface Props {
+  labelledBy: string;
+  tone?: "plain" | "green" | "tint";
+}
+
+const { labelledBy, tone = "plain" } = Astro.props;
+---
+
+<section
+  class:list={["page-section", `page-section-${tone}`]}
+  aria-labelledby={labelledBy}
+>
+  <div class="page-section-inner">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .page-section {
+    padding-block: var(--space-section);
+  }
+
+  .page-section-green {
+    background-color: var(--color-green);
+    color: var(--color-on-green);
+  }
+
+  .page-section-tint {
+    background-color: var(--color-tint);
+  }
+
+  .page-section-inner {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding-inline: var(--content-padding);
+  }
+</style>

@@ -1,0 +1,216 @@
+---
+import BackLink from "../../components/BackLink.astro";
+import Button from "../../components/Button.astro";
+import PageBody from "../../components/PageBody.astro";
+import ProductCard from "../../components/ProductCard.astro";
+import ProductPhoto from "../../components/ProductPhoto.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { loadOffer } from "../../services/offerService";
+import { findProduct, listCatalogueCards } from "../../services/productService";
+
+const relatedCount = 3;
+const offer = await loadOffer();
+const product = await findProduct(Astro.params.slug ?? "", offer);
+if (product === null) {
+  return new Response(null, { status: 404 });
+}
+const allCards = await listCatalogueCards(offer);
+const related = allCards
+  .filter((card) => card.slug !== product.slug)
+  .slice(0, relatedCount);
+---
+
+<BaseLayout title={product.name} description={product.descriptionParagraphs[0]}>
+  <PageBody>
+    <BackLink href="/izdelki">Vsi izdelki</BackLink>
+    <article class="product">
+      <div class="product-photo-frame">
+        <ProductPhoto
+          slug={product.slug}
+          name={product.name}
+          imageId={product.imageId}
+          isSoldOut={product.isSoldOut}
+          loading="eager"
+        />
+      </div>
+      <div>
+        <h1 class="product-name">{product.name}</h1>
+        <p class="product-price">
+          {product.priceLabel}
+          <span class="product-unit">/ {product.unit}</span>
+        </p>
+        <div class="product-description">
+          {product.descriptionParagraphs.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+        </div>
+        <div
+          class:list={["product-week", { "is-sold-out": product.isSoldOut }]}
+        >
+          <p class="product-week-label">Ta teden</p>
+          <p class="product-week-status">{product.weekStatusLabel}</p>
+          <Button href="/narocilo" variant="outline">
+            Oddaj naročilo
+          </Button>
+        </div>
+        <dl class="product-facts">
+          <div class="product-fact">
+            <dt>Sestavine</dt>
+            <dd>{product.ingredients}</dd>
+          </div>
+          <div class="product-fact">
+            <dt>Alergeni</dt>
+            <dd>
+              <strong>{product.allergens}</strong>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+
+    {related.length > 0 && (
+      <section class="related" aria-labelledby="related-title">
+        <h2 id="related-title" class="related-title">
+          Drugi izdelki
+        </h2>
+        <ul class="related-grid">
+          {related.map((card) => (
+            <li>
+              <ProductCard card={card} headingLevel={3} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </PageBody>
+</BaseLayout>
+
+<style>
+  .product {
+    display: grid;
+    gap: var(--space-8);
+    margin-top: var(--space-6);
+  }
+
+  .product-photo-frame {
+    overflow: hidden;
+    border-radius: var(--radius-2xl);
+  }
+
+  .product-name {
+    font-size: var(--text-page-title);
+  }
+
+  .product-price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    color: var(--color-gold-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+  }
+
+  .product-unit {
+    color: var(--color-text-soft);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+  }
+
+  .product-description {
+    display: grid;
+    gap: var(--space-4);
+    max-width: var(--measure);
+    margin-top: var(--space-6);
+    color: var(--color-text-strong);
+    line-height: var(--leading-relaxed);
+  }
+
+  .product-week {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+    margin-top: var(--space-7);
+    padding: var(--space-5);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-white);
+  }
+
+  .product-week-label,
+  .product-fact dt {
+    color: var(--color-text-soft);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+  }
+
+  .product-week-status {
+    margin-bottom: var(--space-4);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+  }
+
+  .product-week.is-sold-out .product-week-status {
+    color: var(--color-text-soft);
+  }
+
+  .product-facts {
+    margin-top: var(--space-7);
+    border-top: var(--border-width) solid var(--color-line);
+    font-size: var(--text-sm);
+  }
+
+  .product-fact {
+    display: grid;
+    gap: var(--space-1);
+    padding-block: var(--space-4);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  .product-fact dd {
+    margin: 0;
+    color: var(--color-text-strong);
+    line-height: var(--leading-relaxed);
+  }
+
+  .product-fact strong {
+    color: var(--color-green);
+  }
+
+  .related {
+    margin-top: var(--space-10);
+    padding-top: var(--space-9);
+    border-top: var(--border-width) solid var(--color-line);
+  }
+
+  .related-title {
+    font-size: var(--text-3xl);
+  }
+
+  .related-grid {
+    display: grid;
+    gap: var(--space-8) var(--space-6);
+    margin-top: var(--space-7);
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 40rem) {
+    .product-fact {
+      grid-template-columns: var(--fact-label-width) 1fr;
+    }
+
+    .related-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .product {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-9);
+    }
+  }
+</style>

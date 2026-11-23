@@ -1,0 +1,87 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Button from "../../../components/Button.astro";
+import CheckboxField from "../../../components/CheckboxField.astro";
+import Field from "../../../components/Field.astro";
+import Notice from "../../../components/Notice.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { messageForActionError } from "../../../services/errorService";
+
+const result = Astro.getActionResult(actions.admin.createRound);
+if (result?.data !== undefined) {
+  return Astro.redirect(`/admin/krogi/${result.data.roundId}`);
+}
+
+let title = "";
+let deliveryInfo = "";
+let copyPrevious = true;
+let fieldErrors: Record<string, string[] | undefined> = {};
+let errorMessage: string | null = null;
+if (result?.error !== undefined) {
+  const formData = await Astro.request.formData();
+  title = String(formData.get("title") ?? "");
+  deliveryInfo = String(formData.get("deliveryInfo") ?? "");
+  copyPrevious = formData.has("copyPrevious");
+  if (isInputError(result.error)) {
+    fieldErrors = result.error.fields;
+  } else {
+    errorMessage = messageForActionError(result.error);
+  }
+}
+---
+
+<AdminLayout title="Nov krog">
+  <form class="round-new" method="POST" action={actions.admin.createRound}>
+    {errorMessage !== null && <Notice variant="error">{errorMessage}</Notice>}
+    <Field
+      label="Naslov"
+      name="title"
+      value={title}
+      errors={fieldErrors.title}
+      hint="Na primer Teden 48."
+      required
+    />
+    <Field
+      label="Podatki o dostavi"
+      name="deliveryInfo"
+      value={deliveryInfo}
+      errors={fieldErrors.deliveryInfo}
+      hint="Prikazano na strani Naročilo."
+      multiline
+    />
+    <CheckboxField
+      label="Kopiraj izdelke, cene in omejitve iz prejšnjega kroga"
+      name="copyPrevious"
+      checked={copyPrevious}
+    />
+    <p class="round-new-note">
+      Brez kopiranja dobi krog vse aktivne izdelke po redni ceni in brez
+      omejitev. Nov krog je osnutek, dokler ga ne odprete.
+    </p>
+    <div class="round-new-actions">
+      <Button>Ustvari krog</Button>
+      <Button href="/admin/krogi" variant="outline">
+        Prekliči
+      </Button>
+    </div>
+  </form>
+</AdminLayout>
+
+<style>
+  .round-new {
+    display: grid;
+    gap: var(--space-5);
+    max-width: var(--measure);
+  }
+
+  .round-new-note {
+    color: var(--color-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  .round-new-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>
